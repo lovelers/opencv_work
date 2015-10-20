@@ -95,7 +95,7 @@ int main(int argc, char ** argv) {
     int dst_cols = src_cols;
     float coefficient = 0.3f;
 
-    geometric_spatial_transformations transformation = SHEAR_VERTICAL;
+    geometric_spatial_transformations transformation = ROTATION;
     switch (transformation) {
         case IDENTITY:
             dst_planes.push_back(Mat(dst_rows, dst_cols, CV_8U, Scalar(0)));

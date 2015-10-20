@@ -8,6 +8,13 @@
 using namespace cv;
 using namespace std;
 
+const float gamma_r = 0.6f;
+//y = gamma_c * pow(x, gamma_r);
+const float gamma_c = 255.f / pow(255, gamma_r);
+uchar gamma_correction(uint value) {
+    uint y =  gamma_c * pow(value, gamma_r);
+    return (y > 255) ? 255 : (uchar)y;
+}
 int main( int argc, char ** argv) {
     const char * imagename = argc > 1 ? argv[1] : LENA_JPG;
 
@@ -28,26 +35,19 @@ int main( int argc, char ** argv) {
 
     for (int y = 0; y < img_yuv.rows; ++y) {
         for (int x = 0; x < img_yuv.cols; ++x) {
-#if 0 //negtive
-            planes[0].at<uchar>(y, x) = 255 - planes[0].at<uchar>(y, x);  // negtive
-            planes[1].at<uchar>(y, x) = 255 - planes[1].at<uchar>(y, x);
-            planes[2].at<uchar>(y, x) = 255 - planes[2].at<uchar>(y, x);
-#else //garyscale
-            planes[1].at<uchar>(y, x) = 128;
-            planes[2].at<uchar>(y, x) = 128;
-#endif
+            planes[0].at<uchar>(y, x) = gamma_correction(planes[0].at<uchar>(y, x));
         }
     }
 
     merge(planes, img_yuv);
     cvtColor(img_yuv, img, COLOR_YCrCb2BGR);
 
-    namedWindow("image with gray", WINDOW_AUTOSIZE);
+    namedWindow("image with gamma", WINDOW_AUTOSIZE);
 
 #if 0
     cvShotImage("image with gray", iplimg);
 #else
-    imshow("image with gray", img);
+    imshow("image with gamma", img);
 #endif
     waitKey();
     return 0;
