@@ -14,7 +14,7 @@ void average_smooth(const vector<Mat> &src_planes, vector<Mat> dst_planes, const
 void unsharp_mask(const vector<Mat> &src_planes1, const vector<Mat> &src_planes2, vector<Mat> dst_planes, const int rows, const int cols);
 uchar gamma_correction(uint value, const float gamma_r, const float gamma_c);
 int main(int argc, char **argv) {
-    const char *imagename = (argc > 2) ? argv[1] : SKELETON_ORIG;
+    const char *imagename = (argc > 1) ? argv[1] : SKELETON_ORIG;
     Ptr<IplImage> iplimg(cvLoadImage(imagename));
     if (!iplimg) {
         cout << "can't load image" << imagename << endl;
@@ -25,40 +25,42 @@ int main(int argc, char **argv) {
     if (img.empty()) return -1;
     Mat dstimg;
 
-    Mat img_yuv;
-    cvtColor(img, img_yuv, COLOR_BGR2YCrCb);
+    Mat img_gray;
+    cvtColor(img, img_gray, COLOR_BGR2GRAY);
     vector<Mat> src_planes;
-    split(img_yuv, src_planes);
+    split(img_gray, src_planes);
     vector<Mat> laplacian_planes;
-    split(img_yuv, laplacian_planes);
-    int rows = img_yuv.rows;
-    int cols = img_yuv.cols;
+    split(img_gray, laplacian_planes);
+    int rows = img_gray.rows;
+    int cols = img_gray.cols;
+    //save the gray
+    imwrite("gary.jpg", img_gray);
 
     //laplacian sharpnening
     laplacian(src_planes, laplacian_planes, rows, cols);
     Mat laplacian_mat;
     merge(laplacian_planes, laplacian_mat);
-    cvtColor(laplacian_mat, dstimg, COLOR_YCrCb2BGR);
+    cvtColor(laplacian_mat, dstimg, COLOR_GRAY2BGR);
     imwrite("laplacian.jpg", dstimg);
     //laplacian_planes.clear();
     //laplacian_mat.release();
 
     //sobel sharpneing
     vector<Mat> sobel_planes;
-    split(img_yuv, sobel_planes);
+    split(img_gray, sobel_planes);
     sobel(src_planes, sobel_planes, rows, cols);
     Mat sobel_mat;
     merge(sobel_planes, sobel_mat);
-    cvtColor(sobel_mat, dstimg, COLOR_YCrCb2BGR);
+    cvtColor(sobel_mat, dstimg, COLOR_GRAY2BGR);
     imwrite("sobel.jpg", dstimg);
 
     //average smooth
     vector<Mat> smooth_planes;
-    split(img_yuv, smooth_planes);
+    split(img_gray, smooth_planes);
     average_smooth(sobel_planes, smooth_planes, rows, cols);
     Mat smooth_mat;
     merge(smooth_planes, smooth_mat);
-    cvtColor(smooth_mat, dstimg, COLOR_YCrCb2BGR);
+    cvtColor(smooth_mat, dstimg, COLOR_GRAY2BGR);
     imwrite("smooth.jpg", dstimg);
 
     //unsharp mask
@@ -68,7 +70,7 @@ int main(int argc, char **argv) {
 
     // add unsharp mask to original image
     vector<Mat> sum_unsharp_planes;
-    split(img_yuv, sum_unsharp_planes);
+    split(img_gray, sum_unsharp_planes);
     for (int y = 0; y < rows; ++y) {
         for (int x = 0; x < cols; ++x) {
             int sum = sum_unsharp_planes[0].at<uchar>(y, x) + unsharp_planes[0].at<int>(y, x);
@@ -77,7 +79,7 @@ int main(int argc, char **argv) {
     }
     Mat sum_unsharp_mat;
     merge(sum_unsharp_planes, sum_unsharp_mat);
-    cvtColor(sum_unsharp_mat, dstimg, COLOR_YCrCb2BGR);
+    cvtColor(sum_unsharp_mat, dstimg, COLOR_GRAY2BGR);
     imwrite("sum_unsharp_mask.jpg", dstimg);
 
 
@@ -92,7 +94,7 @@ int main(int argc, char **argv) {
     }
     Mat result_mat;
     merge(sum_unsharp_planes, result_mat);
-    cvtColor(result_mat, dstimg, COLOR_YCrCb2BGR);
+    cvtColor(result_mat, dstimg, COLOR_GRAY2BGR);
     imwrite("result.jpg", dstimg);
     imshow("result.jpg", dstimg);
     waitKey();
