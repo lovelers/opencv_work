@@ -18,8 +18,7 @@ void laplacian(const vector<Mat> &src_planes, vector<Mat> &dst_planes, int rows,
      * [1    1   1]
      */
     Matx<int, 3, 3> filter(-1, -1, -1, -1, +8, -1, -1, -1, -1);
-    const float C = 1 ;
-
+    const float C = 1;
     Matx<int ,3 ,3> f, g;
     int intensity;
     for (int y = 0; y < rows; ++y) {
@@ -88,7 +87,7 @@ void laplacian1(const vector<Mat> &src_planes, vector<Mat> &dst_planes, int rows
     }
 }
 int main( int argc, char ** argv) {
-    const char * imagename = argc > 1 ? argv[1] : LENA_JPG;
+    const char * imagename = argc > 1 ? argv[1] : BLUR_JPG;
 
     Ptr<IplImage> iplimg(cvLoadImage(imagename));
     if (!iplimg) {
@@ -118,6 +117,7 @@ int main( int argc, char ** argv) {
     namedWindow("image with neighborhood average", WINDOW_AUTOSIZE);
     imshow("image with neighborhood average", img);
     waitKey();
+    imwrite("sharpness.jpg", img);
     return 0;
 }
 
