@@ -37,6 +37,7 @@ int main(int argc, const char ** argv)
     }
     int M = getOptimalDFTSize( img.rows );
     int N = getOptimalDFTSize( img.cols );
+    cout << "m x n: " << m << "x" << n << endl;
     Mat padded;
     copyMakeBorder(img, padded, 0, M - img.rows, 0, N - img.cols, BORDER_CONSTANT, Scalar::all(0));
 
