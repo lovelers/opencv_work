@@ -10,11 +10,12 @@ using namespace cv;
 
 #define EXPONENT 0
 int detla = 50;
-double ratio_min = 0.4f;
-double ratio_max = 2.f;
+double ratio_min = 0.3f;
+double ratio_max = 1.5f;
 
 double base = 1.02f;
-double para_curve_coff = 3;
+double para_curve_coff1 = 3;// 0-10
+double para_curve_coff2 = 1.5;// 10-100
 int main( int argc, char **argv) {
 
 #if EXPONENT
@@ -26,10 +27,10 @@ int main( int argc, char **argv) {
 #else
     // y = a * pow(x, para_curve_coff) + b;
     double bb = ratio_max;
-    double aa = (1.f - ratio_max) / pow(10, para_curve_coff);
+    double aa = (1.f - ratio_max) / pow(10, para_curve_coff1);
 
-    double a = ( 1 - ratio_min) / (double)(pow(10, para_curve_coff) - pow(100, para_curve_coff));
-    double b =  1 - pow(10, para_curve_coff) * a;
+    double a = ( 1 - ratio_min) / (double)(pow(10, para_curve_coff2) - pow(100, para_curve_coff2));
+    double b =  1 - pow(10, para_curve_coff2) * a;
     cout << "aa = " << aa << endl;
     cout << "bb = " << bb << endl;
     cout << "a = " << a << endl;
@@ -72,7 +73,7 @@ int main( int argc, char **argv) {
 #if EXPONENT
         double tmp = aa * pow(base, 10 - j) + bb;
 #else
-        double tmp = aa * pow(10-j, para_curve_coff) + bb;
+        double tmp = aa * pow(10-j, para_curve_coff1) + bb;
 #endif
         if (i%10 == 0) cout << endl;
 
@@ -87,7 +88,7 @@ int main( int argc, char **argv) {
 #if EXPONENT
         double tmp = a * pow(base, i) + b;
 #else
-        double tmp = a * pow(i, para_curve_coff) + b;
+        double tmp = a * pow(i, para_curve_coff2) + b;
 #endif
         if (i % 10 == 0) cout << endl;
         cout << " " << setw(8) << tmp << ",";
