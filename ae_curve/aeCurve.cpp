@@ -7,113 +7,131 @@
 
 using namespace std;
 using namespace cv;
+double ratio_max = 1.3f;
+double ratio_target1 = 1.005;
+int detla1 = 30;
+int target1 = 600;
+double para_curve_coff1 = 1/5.f;
 
+double ratio_min = 0.1f;
+double ratio_target2 = 0.995f;
+double para_curve_coff2 = 1.3f;
+int para_curve_detla2 = 100;
+int detla2 = 50;
+int target2 = 5000 - target1;
+
+#define MIN_VALUE 0
+#define MAX_VALUE 5000
+#define STABLE_VALUE 500
 #define EXPONENT 0
-int detla = 50;
-double ratio_min = 0.3f;
-double ratio_max = 1.5f;
 
-double base = 1.02f;
-double para_curve_coff1 = 3;// 0-10
-double para_curve_coff2 = 1.5;// 10-100
-int main( int argc, char **argv) {
+int g_convergent_table_index[] = {
+    0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500,
+    550, 600, 650, 700, 750, 800, 850, 900, 950, 1000,
+    1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000,
+    2200, 2400, 2600, 2800, 3000, 3300, 3600, 3900, 4200, 4500, 5000
+};
 
-#if EXPONENT
-    // y = a * pow(base, x) + b;
-    double aa = (ratio_max - 1.f) / ( pow(base, 0) - pow(base, 10));
-    double bb = ratio_max - aa * pow(base, 0);
-    double a = (1.f - ratio_min) / (pow(base, 10) - pow(base, 100));
-    double b = 1.f - a * pow(base, 10);
-#else
-    // y = a * pow(x, para_curve_coff) + b;
+#define LOG2 (0.693147f)                                                                          
+#define LOG3 (1.098612f)
+#define EXIF_LOG2(x) (log((float)(x))/LOG3) // log2(x)   
+int main(int argc, char **argv) {
+    // get the curve of low light.
+    // y = a * log2(x) + b;
+    // x = 25, y = 1.5;
+    // x = 500, y = 1.005;
+    double a = (ratio_max -ratio_target1) / (pow(detla1, para_curve_coff1) - pow(target1, para_curve_coff1));
+    double b = ratio_max - a * pow(detla1, para_curve_coff1);
+    int count = 0;
+    printf("a = %6lf, b = %6lf, detla = %d, count = %d\n", a, b, detla1, target1 / detla1);
+    for (int i = detla1; i <= target1; i+= detla1) {
+        count++;
+        printf("{%d, %6lf},\n", i,  a * pow(i, para_curve_coff1) + b);
+        if (count % 10 == 0) {
+            printf("\n");
+        }
+    }
+
+    a = (ratio_target2 - ratio_min) / (pow (detla2, para_curve_coff2) - pow(target2, para_curve_coff2));
+    b = ratio_min - a * pow(target2, para_curve_coff2);
+    printf("a = %6lf, b = %6lf, detla = %d, count = %d\n", a, b, detla2, target2 / detla2);
+    count = 0;
+    for (int i = detla2; i <= target2; i+= detla2) {
+        count++;
+        printf("{%d, %6lf},\n", i + target1, a * pow(i, para_curve_coff2) + b);
+        if (count % 10 == 0) {
+            printf("\n");
+        }
+    }
+    printf("\n");
+    return 0;
+}
+#if 0
+int main(int argc, char **argv) {
+    // y = a * pow (x, para_curve_coff) + b
+
+    // from MIN_VALUE to STABLE_VALUE.
     double bb = ratio_max;
-    double aa = (1.f - ratio_max) / pow(10, para_curve_coff1);
+    double aa = (1.005f - bb) / pow(STABLE_VALUE, para_curve_coff1);
 
-    double a = ( 1 - ratio_min) / (double)(pow(10, para_curve_coff2) - pow(100, para_curve_coff2));
-    double b =  1 - pow(10, para_curve_coff2) * a;
+
+    // from STABLE_VALUE to MAX_VALUE
+    double a = (0.995 - ratio_min) / (pow(STABLE_VALUE, para_curve_coff2) - pow(MAX_VALUE, para_curve_coff2));
+    double b = 0.995 - pow (STABLE_VALUE, para_curve_coff2) * a;
+
     cout << "aa = " << aa << endl;
     cout << "bb = " << bb << endl;
     cout << "a = " << a << endl;
     cout << "b = " << b << endl;
-#endif
-    {
-        for (int i = 0; i <= 20; i++) {
-            if (i %10 == 0) {
-                cout << endl;
-            }
-            cout << " " <<setw(8) << i * 25 << ",";
-        }
-        for (int i = 10; i <= 100; i++) {
-            if (i %10 == 0) {
-                cout << endl;
-            }
-            cout << " " <<setw(8) << i * 50 << ",";
-        }
-        cout << endl;
+
 #if 0
-        for (int i = 0; i < 10; i++) {
-            cout << " " << setw(8) << aa * pow(base, i) + bb  << ",";
-        }
-        for (int i = 10; i <= 100; i++) {
-            if (i % 10 == 0) cout << endl;
-            cout << " " << setw(8) << a * pow(base, i) + b << ",";
-        }
-        cout << endl;
-#endif
+    for (int i = 0; i <= STABLE_VALUE; i += para_curve_detla1) {
+        cout << " " << i << ",";
     }
-    int hist_h = ratio_max * 100;
-    const int weight_coff = 5;
-    int hist_w = 101 * weight_coff;
+
+    cout << endl;
+
+    for (int i = STABLE_VALUE; i <= MAX_VALUE; i += para_curve_detla2) {
+        cout << " " << i << ",";
+    }
+    cout << endl;
+#endif
+
+    int hist_w = MAX_VALUE;
+    int hist_h = ratio_max * 1000;
+
     Mat histImage(hist_h, hist_w, CV_8UC3, Scalar(255,255,255));
     vector<Mat> hist_planes;
     split(histImage, hist_planes);
 
-    for (int i = 0; i <= 20; i++) {
-        float j = (float) i / 2.f;
-#if EXPONENT
-        double tmp = aa * pow(base, 10 - j) + bb;
-#else
-        double tmp = aa * pow(10-j, para_curve_coff1) + bb;
-#endif
-        if (i%10 == 0) cout << endl;
-
-        cout << " " << setw(8) << double(ratio_max - tmp + 1) << ",";
-        int k = (ratio_max - tmp + 1) * 100;
-        hist_planes[0].at<uchar>(k, j * weight_coff) = 255;
-        hist_planes[1].at<uchar>(k, j * weight_coff) = 0;
-        hist_planes[2].at<uchar>(k, j * weight_coff) = 0;
-    }
-
-    for (int i = 10; i < hist_w / weight_coff; i++) {
-#if EXPONENT
-        double tmp = a * pow(base, i) + b;
-#else
-        double tmp = a * pow(i, para_curve_coff2) + b;
-#endif
-        if (i % 10 == 0) cout << endl;
-        cout << " " << setw(8) << tmp << ",";
-
-        int k = tmp * 100;
-        hist_planes[0].at<uchar>(k, i * weight_coff) = 255;
-        hist_planes[1].at<uchar>(k, i * weight_coff) = 0;
-        hist_planes[2].at<uchar>(k, i * weight_coff) = 0;
-    }
-
-    cout << endl;
-    Mat flipHistImage(hist_h, hist_w, CV_8UC3, Scalar(255,255,255));
-    vector<Mat> flip_planes;
-    split(flipHistImage, flip_planes);
-    for (int i = 0; i < hist_w; i++) {
-        for (int j = 0; j < hist_h; j++) {
-            flip_planes[0].at<uchar>(j, i) = hist_planes[0].at<uchar>(hist_h - j -1, i);
-            flip_planes[1].at<uchar>(j, i) = hist_planes[1].at<uchar>(hist_h - j -1, i);
-            flip_planes[2].at<uchar>(j, i) = hist_planes[2].at<uchar>(hist_h - j -1, i);
+    int index = 0;
+    for (int i = 0; i < sizeof (g_convergent_table_index) / sizeof (int); i++) {
+        printf("%6d, ", g_convergent_table_index[i]);
+        if (i % 5 == 0) {
+            printf("\n");
         }
     }
-    merge(flip_planes, flipHistImage);
+    printf("\n");
+    for (int i = 0; i <= MAX_VALUE; i++) {
+        double tmp = 0.f;
+        if (i <= STABLE_VALUE) {
+            tmp = aa * pow(STABLE_VALUE - i, para_curve_coff1) + bb;
+            tmp = ratio_max - tmp +1;
+        } else {
+            tmp = a * pow(i, para_curve_coff2) + b;
+        }
+        if (i == g_convergent_table_index[index]) {
+            printf("%.5f, ", tmp);
+            if (index % 5 == 0) {
+                printf("\n");
+            }
+            index++;
+        }
 
-    namedWindow("histogram", WINDOW_AUTOSIZE);
-    imshow("histogram", flipHistImage);
-    waitKey(0);
+    }
+    printf("\n");
+
     return 0;
 }
+
+#endif

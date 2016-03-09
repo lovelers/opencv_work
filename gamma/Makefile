@@ -1,7 +1,7 @@
 opencv=pkg-config opencv --libs --cflags opencv
 CC=g++
 
-all: samGamma.out albertGamma.out willisGamma.out gammaRatio.out
+all: samGamma.out albertGamma.out willisGamma.out gammaRatio.out gammaTable.out
 
 samGamma.out : samGamma.o
 	$(CC) -o samGamma.out samGamma.o `$(opencv)`
@@ -15,6 +15,9 @@ willisGamma.out : willisGamma.o
 gammaRatio.out : gammaRatio.o
 	$(CC) -o gammaRatio.out gammaRatio.o `$(opencv)`
 
+gammaTable.out : gammaTable.o
+	$(CC) -o gammaTable.out gammaTable.o `$(opencv)`
+
 samGamma.o : samGamma.cpp
 	$(CC) -c samGamma.cpp `$(opencv)`
 
@@ -26,6 +29,10 @@ willisGamma.o : willisGamma.cpp
 
 gammaRatio.o : gammaRatio.cpp
 	$(CC) -c gammaRatio.cpp `$(opencv)`
+
+gammaTable.o : gammaTable.cpp
+	$(CC) -c gammaTable.cpp `$(opencv)`
+
 
 
 
