@@ -8,46 +8,46 @@
 using namespace std;
 using namespace cv;
 
-int gamma_index[] = {
-    0, 64, 128, 256, 384, 512, 640, 768 ,
-    896, 1024, 1280, 1536, 1792, 2048, 2304, 2560 ,
-    2816, 3072, 3584, 4096, 4608, 5120, 6144, 7168 ,
-    8192, 9216, 10240, 11264, 12288, 13312, 14336, 16384 ,
+typedef unsigned int U32;
+// copy from the gamma_tuning.h
+typedef struct __gamma_base_config {
+    float normalGamma;
+    int normalBaseOffset;
+    int normalEndOffset;
+    U32 normalLinearityWeight;
+    float indoorGamma;
+    int indoorBaseOffset;
+    int indoorEndOffset;
+    U32 indoorLinearityWeight;
+    float outdoorGamma;
+    int outdoorBaseOffset;
+    int outdoorEndOffset;
+    U32 outdoorLinearityWeight;
+    const U32 *gamma_table_x;
+    const float *user_gamma;
+} gamma_base_config;
+
+
+// convert from the gamma_tuning.cpp.
+const U32 gamma_index[] =  {
+    0,     128,   256,   384,   512,   640,   768,   896,
+    1024,  1024+128, 1280, 1536,  1792,  2048,  2304,  2560,
+    2816,3072,  3072+256,  3584, 4096,  4608,  5120,  5120+512,
+    6144, 6144+512, 7168, 8192, 10240, 12288, 14336, 16384 
 };
 
-// normal gamma
-int gamma1_table[] = {
-    0, 1024, 1448, 2048, 2508, 2896, 3238, 3547,
-    3831, 4096, 4579, 5016, 5418, 5792, 6144, 6476,
-    6792, 7094, 7662, 8192, 8688, 9158, 10033, 10836,
-    11585, 12288, 12952, 13584, 14188, 14768, 15325, 16384,
-};
-
-// gamma indoor
-int gamma2_table[] = {
-    0, 399, 799, 1198, 1598, 1910, 2194, 2456,
-    2703, 2936, 3372, 3776, 4154, 4513, 4855, 5183,
-    5498, 5803, 6385, 6936, 7462, 7965, 8919, 9813,
-    10660, 11468, 12242, 12987, 13707, 14404, 15082, 16384,
-};
-
-// gamma outdoor
-int gamma3_table[] = {
-    0, 769, 1539, 2308, 3078, 3499, 3864, 4191 ,
-    4489, 4764, 5262, 5708, 6113, 6488, 6837, 7166 ,
-    7477, 7772, 8325, 8835, 9311, 9758, 10584, 11336, 
-    12031, 12679, 13289, 13865, 14413, 14936, 15437, 16384 ,
-};
-
-int gamma4_table[] = {
-    0, 0, 0, 0, 0, 0, 841, 3552,
-    4575, 5608, 6672, 7753, 8856, 11104, 13404, 15730,
-    16384, 16384, 16384, 16384, 16384, 16384, 16384, 16384,
-    16384, 16384, 16384, 16384, 16384, 16384, 16384, 16384
+const float user_gamma[] = {
+    0.1f, 0.52f, 0.55f, 0.58f, 0.61f, 0.64f, 0.67f, 0.7f,
+    0.73f, 0.76f, 0.79f, 0.85f, 0.91f, 0.96f, 1.01f, 1.02f,
+    1.03f, 1.04f, 1.05f, 1.06f, 1.07f, 1.08f, 1.09f, 1.10f,
+    1.09f, 1.08f, 1.07f, 1.06f, 1.05f, 1.04f, 1.03f, 1.02f,
 };
 
 int gamma_w = 16384;
 int gamma_h = 16384;
+#define GAMMA_MAX_VALUE 16384
+#define GAMMA_TABLE_COUNT 32
+
 void dot(vector<Mat> gamma_planes, int x, int y, int detla, int b, int g, int r) {
     int x1 = x - detla;
     int x2 = x + detla;
@@ -74,11 +74,50 @@ void Gamma(double R, int w, int h, vector<Mat> &gamma_planes) {
         int y = C * pow(x, R);
         dot(gamma_planes, x, y, 20, 0, 0, 0);
     }
-};
+}
+
+void initGamma(U32 *gamma_table_y, float gamma, int base_offset, int end_offset, int linearity) {
+    float C = (GAMMA_MAX_VALUE - base_offset + end_offset) /pow (GAMMA_MAX_VALUE, gamma);
+    int result = 0;
+    for (int i = 0; i < GAMMA_TABLE_COUNT; i++) {
+        result  = C * pow (gamma_index[i], gamma) + base_offset;
+        gamma_table_y[i] = (result < 0) ? 0 : (result > GAMMA_MAX_VALUE) ? GAMMA_MAX_VALUE : result;
+    }
+}
+
+gamma_base_config baseConfig;
+
 int main(int arg, char **argv) {
     Mat gamma(gamma_h, gamma_w, CV_8UC3, Scalar(255, 255,255));
     vector<Mat> gamma_planes;
     split(gamma, gamma_planes);
+
+
+    baseConfig.normalGamma = 1/2.2f;
+    baseConfig.normalBaseOffset = -128;
+    baseConfig.normalEndOffset = 0;
+    baseConfig.normalLinearityWeight = 0;
+
+    baseConfig.indoorGamma = 1/1.8f;
+    baseConfig.indoorBaseOffset = 0;
+    baseConfig.indoorEndOffset = 0;
+    baseConfig.indoorLinearityWeight = 0;
+
+    baseConfig.outdoorGamma = 1/2.4f;
+    baseConfig.outdoorBaseOffset = -384;
+    baseConfig.outdoorEndOffset = 384;
+    baseConfig.outdoorLinearityWeight = 4;
+
+    baseConfig.gamma_table_x = gamma_index;
+    baseConfig.user_gamma = user_gamma;
+
+    // normal gamma.
+    U32 gamma1_table[32];
+    initGamma(gamma1_table, baseConfig.normalGamma, baseConfig.normalBaseOffset, baseConfig.normalEndOffset, baseConfig.normalLinearityWeight);
+
+    for (int i = 0; i < 32; i++) {
+        gamma1_table[i] *= baseConfig.user_gamma[i];
+    }
 
     for (int i = 0; i < 31; i++) {
         int x1 = gamma_index[i];
@@ -96,6 +135,14 @@ int main(int arg, char **argv) {
         }
     }
 
+
+    // indoor gamma.
+    U32 gamma2_table[32];
+    initGamma(gamma2_table, baseConfig.indoorGamma, baseConfig.indoorBaseOffset, baseConfig.indoorEndOffset, baseConfig.indoorLinearityWeight);
+
+    for (int i = 0; i < 32; i++) {
+        gamma2_table[i] *= baseConfig.user_gamma[i];
+    }
     for (int i = 0; i < 31; i++) {
         int x1 = gamma_index[i];
         int x2 = gamma_index[i+1];
@@ -112,6 +159,14 @@ int main(int arg, char **argv) {
         }
     }
 
+
+    // outdoor gamma.
+    U32 gamma3_table[32];
+    initGamma(gamma3_table, baseConfig.outdoorGamma, baseConfig.outdoorBaseOffset, baseConfig.outdoorEndOffset, baseConfig.outdoorLinearityWeight);
+
+    for (int i = 0; i < 32; i++) {
+        gamma3_table[i] *= baseConfig.user_gamma[i];
+    }
     for (int i = 0; i < 31; i++) {
         int x1 = gamma_index[i];
         int x2 = gamma_index[i+1];
@@ -127,6 +182,10 @@ int main(int arg, char **argv) {
             dot(gamma_planes, x, y, 10, 0, 0, 255);
         }
     }
+
+    // blue sshape.
+    U32 gamma4_table[32];
+    initGamma(gamma4_table, 1/5.f, 0, -2048, 0);
 
     for (int i = 0; i < 31; i++) {
         int x1 = gamma_index[i];
