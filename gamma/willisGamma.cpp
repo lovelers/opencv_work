@@ -43,6 +43,13 @@ const float user_gamma[] = {
     1.09f, 1.08f, 1.07f, 1.06f, 1.05f, 1.04f, 1.03f, 1.02f,
 };
 
+#if 0
+    0.1f, 0.52f, 0.55f, 0.58f, 0.61f, 0.64f, 0.67f, 0.7f,
+    0.73f, 0.76f, 0.79f, 0.85f, 0.91f, 0.97f, 1.02f, 1.06f,
+    1.09f, 1.11f, 1.12f, 1.11f, 1.10f, 1.09f, 1.09f, 1.09f,
+    1.09f, 1.08f, 1.07f, 1.06f, 1.05f, 1.04f, 1.03f, 1.02f,
+#endif
+
 int gamma_w = 16384;
 int gamma_h = 16384;
 #define GAMMA_MAX_VALUE 16384
@@ -85,6 +92,92 @@ void initGamma(U32 *gamma_table_y, float gamma, int base_offset, int end_offset,
     }
 }
 
+void applyUserGamma(U32 *gamma_table_y, const float *user_gamma) {
+    for (int i = 0; i < GAMMA_TABLE_COUNT; ++i) {
+        int result = gamma_table_y[i] * user_gamma[i];
+        gamma_table_y[i] = (result < 0) ? 0 : (result > GAMMA_MAX_VALUE) ? GAMMA_MAX_VALUE : result;
+    }
+}
+
+void applyUserGamma1(U32 *gamma_table_y, const float *user_gamma) {
+    U32 gamma_result[GAMMA_TABLE_COUNT];
+    for (int i = 1; i < GAMMA_TABLE_COUNT; ++i) {
+        float detla_x =  (float)(gamma_index[i] - gamma_index[i-1]);
+        float k = (gamma_table_y[i] - gamma_table_y[i-1]) / detla_x * user_gamma[i];
+        int result = k * detla_x + gamma_table_y[i-1];
+        gamma_result[i] = (result < 0) ? 0 : (result > GAMMA_MAX_VALUE) ? GAMMA_MAX_VALUE : result;
+    }
+
+    memcpy(gamma_table_y, gamma_result, sizeof (U32) * GAMMA_TABLE_COUNT);
+}
+
+void doGammaSmooth3(U32 *gamma_table_y) {
+    U32 gamma_result[GAMMA_TABLE_COUNT];
+    U32 smooth3 = 0;
+    for (int i = 0; i < GAMMA_TABLE_COUNT; ++i) {
+        if (i == 0 || i == GAMMA_TABLE_COUNT-1) {
+            gamma_result[i] = gamma_table_y[i];
+            continue;
+        }
+        if (gamma_index[i+1] - gamma_index[i] == gamma_index[i] - gamma_index[i-1]) {
+            smooth3 = gamma_table_y[i] + gamma_table_y[i-1] + gamma_table_y[i+1];
+        } else {
+            float k = (gamma_index[i] - gamma_index[i-1]) / (float)(gamma_index[i+1] - gamma_index[i]);
+            k = pow (k , 0.4);
+            smooth3 = gamma_table_y[i] + gamma_table_y[i-1] + gamma_table_y[i] * (1-k) + gamma_table_y[i+1] * k;
+            cout << "k = " << k << ", i = " << i << ", smooth3 = " << smooth3 << endl;
+        }
+
+        cout << "smooth3 = " << smooth3 << endl;
+        gamma_result[i] =  smooth3 / 3;
+    }
+    // gamma_swarpper
+    for (int i = 0; i < GAMMA_TABLE_COUNT -1; i++) {
+        if (gamma_result[i] > gamma_result[i+1]) {
+            U32 tmp = gamma_result[i];
+            gamma_result[i] = gamma_result[i+1];
+            gamma_result[i+1] = tmp;
+        }
+    }
+    memcpy(gamma_table_y, gamma_result, sizeof (U32) * GAMMA_TABLE_COUNT);
+}
+
+void doGammaSmooth5(U32 *gamma_table_y) {
+    U32 gamma_result[GAMMA_TABLE_COUNT];
+    int smooth3 = gamma_table_y[0] + gamma_table_y[1] + gamma_table_y[2];
+    int smooth5 = smooth3 + gamma_table_y[3] + gamma_table_y[4];
+    for (int i = 0; i < GAMMA_TABLE_COUNT; ++i) {
+        if (i == 0 || i == GAMMA_TABLE_COUNT-1) {
+            gamma_result[i] = gamma_table_y[i];
+            continue;
+        }
+        if (i == 1) {
+            gamma_result[i] =  smooth3 / 3;
+            continue;
+        }
+        if (i == 2) {
+            gamma_result[i] =  smooth5 / 5;
+            continue;
+        }
+        if (i == GAMMA_TABLE_COUNT - 2) {
+            smooth3 = smooth5 - gamma_table_y[i-3] - gamma_table_y[i-2];
+            gamma_result[i] =  smooth3 / 3;
+            continue;
+        }
+        smooth5 = smooth5 + gamma_table_y[i+2] - gamma_table_y[i-3];
+        gamma_result[i] =  smooth5 / 5;
+    }
+    // gamma_swarpper
+    for (int i = 0; i < GAMMA_TABLE_COUNT -1; i++) {
+        if (gamma_result[i] > gamma_result[i+1]) {
+            U32 tmp = gamma_result[i];
+            gamma_result[i] = gamma_result[i+1];
+            gamma_result[i+1] = tmp;
+        }
+    }
+    memcpy(gamma_table_y, gamma_result, sizeof (U32) * GAMMA_TABLE_COUNT);
+}
+
 gamma_base_config baseConfig;
 
 int main(int arg, char **argv) {
@@ -112,37 +205,57 @@ int main(int arg, char **argv) {
     baseConfig.user_gamma = user_gamma;
 
     // normal gamma.
-    U32 gamma1_table[32];
-    initGamma(gamma1_table, baseConfig.normalGamma, baseConfig.normalBaseOffset, baseConfig.normalEndOffset, baseConfig.normalLinearityWeight);
+    {
+        U32 gamma1_table[32];
+        initGamma(gamma1_table, baseConfig.normalGamma, baseConfig.normalBaseOffset, baseConfig.normalEndOffset, baseConfig.normalLinearityWeight);
 
-    for (int i = 0; i < 32; i++) {
-        gamma1_table[i] *= baseConfig.user_gamma[i];
-    }
+        applyUserGamma(gamma1_table, baseConfig.user_gamma);
+        doGammaSmooth3(gamma1_table);
+        for (int i = 0; i < 31; i++) {
+            int x1 = gamma_index[i];
+            int x2 = gamma_index[i+1];
+            int y1 = gamma1_table[i];
+            int y2 = gamma1_table[i+1];
 
-    for (int i = 0; i < 31; i++) {
-        int x1 = gamma_index[i];
-        int x2 = gamma_index[i+1];
-        int y1 = gamma1_table[i];
-        int y2 = gamma1_table[i+1];
+            double a = (y2 -y1) / (double)(x2 - x1);
+            double b =  y1 - a * x1;
 
-        double a = (y2 -y1) / (double)(x2 - x1);
-        double b =  y1 - a * x1;
-        cout << a << "," << b << endl;
-
-        for (int x = x1; x < x2; x++) {
-            int y = a * x + b;
-            dot(gamma_planes, x, y, 10, 255, 0, 0);
+            for (int x = x1; x < x2; x++) {
+                int y = a * x + b;
+                dot(gamma_planes, x, y, 10, 255, 0, 0);
+            }
         }
     }
+    if (0){
+        U32 gamma1_table[32];
+        initGamma(gamma1_table, baseConfig.normalGamma, baseConfig.normalBaseOffset, baseConfig.normalEndOffset, baseConfig.normalLinearityWeight);
 
+        applyUserGamma(gamma1_table, baseConfig.user_gamma);
+        doGammaSmooth3(gamma1_table);
+        for (int i = 0; i < 31; i++) {
+            int x1 = gamma_index[i];
+            int x2 = gamma_index[i+1];
+            int y1 = gamma1_table[i];
+            int y2 = gamma1_table[i+1];
+
+            double a = (y2 -y1) / (double)(x2 - x1);
+            double b =  y1 - a * x1;
+            //cout << a << "," << b << endl;
+
+            cout << "a: " << a << ", b:" << b << ", x1:" << x1 <<", y1:" << y1 << ", x2:" << x2 << ", y2 = " << y2 <<endl;
+            for (int x = x1; x < x2; x++) {
+                int y = a * x + b;
+                dot(gamma_planes, x, y, 10, 0, 255, 0);
+            }
+        }
+    }
 
     // indoor gamma.
     U32 gamma2_table[32];
     initGamma(gamma2_table, baseConfig.indoorGamma, baseConfig.indoorBaseOffset, baseConfig.indoorEndOffset, baseConfig.indoorLinearityWeight);
 
-    for (int i = 0; i < 32; i++) {
-        gamma2_table[i] *= baseConfig.user_gamma[i];
-    }
+    applyUserGamma(gamma2_table, baseConfig.user_gamma);
+    doGammaSmooth3(gamma2_table);
     for (int i = 0; i < 31; i++) {
         int x1 = gamma_index[i];
         int x2 = gamma_index[i+1];
@@ -151,7 +264,7 @@ int main(int arg, char **argv) {
 
         double a = (y2 -y1) / (double)(x2 - x1);
         double b =  y1 - a * x1;
-        cout << a << "," << b << endl;
+        //cout << a << "," << b << endl;
 
         for (int x = x1; x < x2; x++) {
             int y = a * x + b;
@@ -164,9 +277,8 @@ int main(int arg, char **argv) {
     U32 gamma3_table[32];
     initGamma(gamma3_table, baseConfig.outdoorGamma, baseConfig.outdoorBaseOffset, baseConfig.outdoorEndOffset, baseConfig.outdoorLinearityWeight);
 
-    for (int i = 0; i < 32; i++) {
-        gamma3_table[i] *= baseConfig.user_gamma[i];
-    }
+    applyUserGamma(gamma3_table, baseConfig.user_gamma);
+    doGammaSmooth3(gamma3_table);
     for (int i = 0; i < 31; i++) {
         int x1 = gamma_index[i];
         int x2 = gamma_index[i+1];
@@ -175,7 +287,7 @@ int main(int arg, char **argv) {
 
         double a = (y2 -y1) / (double)(x2 - x1);
         double b =  y1 - a * x1;
-        cout << a << "," << b << endl;
+        //cout << a << "," << b << endl;
 
         for (int x = x1; x < x2; x++) {
             int y = a * x + b;
@@ -185,8 +297,14 @@ int main(int arg, char **argv) {
 
     // blue sshape.
     U32 gamma4_table[32];
-    initGamma(gamma4_table, 1/5.f, 0, -2048, 0);
+    initGamma(gamma4_table, 1/2.2f, 0, 0, 0);
+    doGammaSmooth3(gamma3_table);
 
+    for (int i = 0; i < 32; i++) {
+        if (i % 8 == 0) cout << endl;
+        cout <<gamma4_table[i]<< ",";
+    }
+    cout << endl;
     for (int i = 0; i < 31; i++) {
         int x1 = gamma_index[i];
         int x2 = gamma_index[i+1];
@@ -195,7 +313,7 @@ int main(int arg, char **argv) {
 
         double a = (y2 -y1) / (double)(x2 - x1);
         double b =  y1 - a * x1;
-        cout << a << "," << b << endl;
+        //cout << a << "," << b << endl;
 
         for (int x = x1; x < x2; x++) {
             int y = a * x + b;
