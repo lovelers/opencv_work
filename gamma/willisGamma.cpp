@@ -38,9 +38,9 @@ const U32 gamma_index[] =  {
 
 const float user_gamma[] = {
     0.1f, 0.52f, 0.55f, 0.58f, 0.61f, 0.64f, 0.67f, 0.7f,
-    0.73f, 0.76f, 0.79f, 0.85f, 0.91f, 0.96f, 1.01f, 1.02f,
-    1.03f, 1.04f, 1.05f, 1.06f, 1.07f, 1.08f, 1.09f, 1.10f,
-    1.09f, 1.08f, 1.07f, 1.06f, 1.05f, 1.04f, 1.03f, 1.02f,
+    0.73f, 0.76f, 0.79f, 0.85f, 0.91f, 0.96f, 1.01f, 1.015f,
+    1.022f, 1.038f, 1.055f, 1.065f, 1.078f, 1.09f, 1.10f, 1.105f,
+    1.10f, 1.087f, 1.075f, 1.06f, 1.045f, 1.030f, 1.015f, 1.f,
 };
 
 #if 0
@@ -222,7 +222,15 @@ int main(int arg, char **argv) {
 
             for (int x = x1; x < x2; x++) {
                 int y = a * x + b;
-                dot(gamma_planes, x, y, 10, 255, 0, 0);
+                if (x <= 1280) {
+                    dot(gamma_planes, x, y, 10, 255, 0, 0);
+                } else if (x <= 3584) {
+                    dot(gamma_planes, x, y, 10, 0, 255, 0);
+                } else if (x <= 7168) {
+                    dot(gamma_planes, x, y, 10, 0, 0, 255);
+                } else {
+                    dot(gamma_planes, x, y, 10, 128, 128, 128);
+                }
             }
         }
     }
@@ -268,7 +276,15 @@ int main(int arg, char **argv) {
 
         for (int x = x1; x < x2; x++) {
             int y = a * x + b;
-            dot(gamma_planes, x, y, 10, 0, 255, 0);
+            if (x <= 1280) {
+                dot(gamma_planes, x, y, 10, 255, 0, 0);
+            } else if (x <= 3584) {
+                dot(gamma_planes, x, y, 10, 0, 255, 0);
+            } else if (x <= 7168) {
+                dot(gamma_planes, x, y, 10, 0, 0, 255);
+            } else {
+                dot(gamma_planes, x, y, 10, 128, 128, 128);
+            }
         }
     }
 
@@ -291,7 +307,15 @@ int main(int arg, char **argv) {
 
         for (int x = x1; x < x2; x++) {
             int y = a * x + b;
-            dot(gamma_planes, x, y, 10, 0, 0, 255);
+            if (x <= 1280) {
+                dot(gamma_planes, x, y, 10, 255, 0, 0);
+            } else if (x <= 3584) {
+                dot(gamma_planes, x, y, 10, 0, 255, 0);
+            } else if (x <= 7168) {
+                dot(gamma_planes, x, y, 10, 0, 0, 255);
+            } else {
+                dot(gamma_planes, x, y, 10, 128, 128, 128);
+            }
         }
     }
 
