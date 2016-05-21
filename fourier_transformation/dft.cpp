@@ -5,6 +5,7 @@
 #include "opencv2/highgui.hpp"
 
 #include <stdio.h>
+#include <iostream>
 
 using namespace cv;
 using namespace std;
@@ -37,14 +38,16 @@ int main(int argc, const char ** argv)
     }
     int M = getOptimalDFTSize( img.rows );
     int N = getOptimalDFTSize( img.cols );
-    cout << "m x n: " << m << "x" << n << endl;
+    cout << "m x n: " << M << "x" << N << endl;
     Mat padded;
     copyMakeBorder(img, padded, 0, M - img.rows, 0, N - img.cols, BORDER_CONSTANT, Scalar::all(0));
 
     Mat planes[] = {Mat_<float>(padded), Mat::zeros(padded.size(), CV_32F)};
     Mat complexImg;
     merge(planes, 2, complexImg);
-
+    cout << "complexImg elemSize() = " << complexImg.elemSize() << "compleImg elemSize1() = " << complexImg.elemSize1() << endl;
+    cout << "complexImg . depth() : " << complexImg.depth() << endl;
+    cout << "complexImg. channel(): " << complexImg.channels() << endl;
     dft(complexImg, complexImg);
 
     // compute log(1 + sqrt(Re(DFT(img))**2 + Im(DFT(img))**2))
