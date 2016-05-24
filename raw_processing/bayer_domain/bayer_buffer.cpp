@@ -42,7 +42,7 @@ bool bayer_buffer::init(const char *_file, int _width, int _height, int _bitdept
 
     rewind(fp);
 
-    bayer.create(_width, _height, CV_16UC1);
+    bayer.create(_height, _width, CV_16UC1);
 
 #if 1
     for (int i = 0; i < _height; ++i) {
@@ -56,7 +56,7 @@ bool bayer_buffer::init(const char *_file, int _width, int _height, int _bitdept
             int c2 = fgetc(fp) & 0xFF;
             int res = ((c0 << 16) | (c1 << 8) | c2);
             res = ((res << offset) >> (24 - _bitdepths));
-            bayer.at<U16>(i, j) = res;
+            bayer.at<ushort>(i, j) = res;
         }
     }
 #endif

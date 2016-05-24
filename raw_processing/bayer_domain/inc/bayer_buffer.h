@@ -1,7 +1,6 @@
 #ifndef __BAYER_BUFFER_H
 #define __BAYER_BUFFER_H
 
-
 #include "opencv2/core.hpp"
 #include "opencv2/core/utility.hpp"
 #include "opencv2/imgproc.hpp"
@@ -13,7 +12,6 @@ using namespace std;
 
 class bayer_buffer {
     public:
-        typedef unsigned short U16;
         enum Bayer_Pattern_Type {
             BAYER_UNKNOWN = -1,
             BAYER_RGrGbB = 0,
