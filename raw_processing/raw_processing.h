@@ -1,8 +1,14 @@
 #ifndef __RAW_PROCESSING_H
 #define __RAW_PROCESSING_H
-#include "bayer_domain/inc/bayer_buffer.h"
-#include "bayer_domain/inc/color_demosaicing_interpolation.h"
+#include "opencv2/core.hpp"
 
+#include "bayer_domain/bayer_buffer.h"
+#include "bayer_domain/color_demosaicing_interpolation.h"
+#include "bayer_domain/white_balance.h"
+#include "bayer_domain/noise_reduction.h"
+
+#include "rgb_domain/color_correction.h"
+#include "rgb_domain/gamma_correction.h"
 using namespace cv;
 using namespace std;
 
@@ -12,9 +18,14 @@ class raw_processing {
             static raw_processing raw;
             return raw;
         }
-        bool selectRawFile(const char *_file, int _width, int _height, int _bitdepths);
+        bool selectRawFile(const char *_file, int _height, int _width, int _bitdepths);
         const Mat& getBayerMat();
-        void demosaicing(const Mat& bayer, Mat *rgbMat, int bayerPattern);
+        void deNoise(Mat& _bayer8, int _denoiseType);
+        void applyWBGains(Mat& _bayer, int _rGains, int _gGains, int _bGains, int _pattern);
+        void demosaicing(const Mat& _bayer, Mat *_rgbMat, int _bayerPattern);
+
+        void applyCcm(Mat &_rgb);
+        void applyGamma(Mat &_rgb);
         ~raw_processing();
 
     private:

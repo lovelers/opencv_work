@@ -1,6 +1,6 @@
 #include <iostream>
 #include <stdio.h>
-#include "inc/bayer_buffer.h"
+#include "bayer_buffer.h"
 using namespace std;
 using namespace cv;
 
@@ -16,7 +16,7 @@ const static int width_max = 8192;
 const static int height_max = 8192;
 const static int bitdepths_max = 16;
 
-bool bayer_buffer::init(const char *_file, int _width, int _height, int _bitdepths) {
+bool bayer_buffer::init(const char *_file, int _height, int _width, int _bitdepths) {
     if (_file == NULL
             || _width < 0 || _width > width_max
             || _height < 0 || _height > height_max
@@ -43,23 +43,26 @@ bool bayer_buffer::init(const char *_file, int _width, int _height, int _bitdept
     rewind(fp);
 
     bayer.create(_height, _width, CV_16UC1);
-
-#if 1
-    for (int i = 0; i < _height; ++i) {
-        for (int j = 0; j < _width; ++j) {
-            int bits = (i * _width + j) * _bitdepths;
-            int seekpos = (bits >> 3);
-            int offset = bits % 8;
-            fseek(fp, seekpos, SEEK_SET);
-            int c0 = fgetc(fp) & 0xFF;
-            int c1 = fgetc(fp) & 0xFF;
-            int c2 = fgetc(fp) & 0xFF;
-            int res = ((c0 << 16) | (c1 << 8) | c2);
-            res = ((res << offset) >> (24 - _bitdepths));
-            bayer.at<ushort>(i, j) = res;
+    if (_bitdepths == 12) {
+        fastParserBayer12(fp, bayer);
+    } else {
+        for (int i = 0; i < _height; ++i) {
+            for (int j = 0; j < _width; ++j) {
+                int bits = (i * _width + j) * _bitdepths;
+                int seekpos = (bits >> 3);
+                int offset = bits % 8;
+                fseek(fp, seekpos, SEEK_SET);
+                int c0 = fgetc(fp) & 0xFF;
+                int c1 = fgetc(fp) & 0xFF;
+                int c2 = fgetc(fp) & 0xFF;
+                int res = ((c0 << 16) | (c1 << 8) | c2);
+                res = ((res << offset) >> (24 - _bitdepths));
+                bayer.at<ushort>(i, j) = res;
+            }
         }
     }
-#endif
+    cout << "fileSize = " << fileSize << ",seekto = " << ftell(fp)<< endl;
+
     fclose(fp);
     width = _width;
     height = _height;
@@ -72,3 +75,17 @@ void bayer_buffer::uninit() {
 void bayer_buffer::setPattern(Bayer_Pattern_Type _pattern) {
     pattern  = _pattern;
 }
+
+void bayer_buffer::fastParserBayer12(FILE *fp, Mat bayer) {
+
+    MatIterator_<ushort> it = bayer.begin<ushort>(),
+        it_end = bayer.end<ushort>();
+    while (it!=it_end) {
+        int a = fgetc(fp);
+        int b = fgetc(fp);
+        int c = fgetc(fp);
+        *it++ = (ushort)((a << 4) |(b>>4) &0xFFF);
+        *it++ = (ushort)(((b << 8) | c) &0xFFF);
+    }
+}
+

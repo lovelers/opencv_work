@@ -346,6 +346,12 @@ int main(int arg, char **argv) {
     }
     cout << "goto here" << endl;
 
+    // test
+    for (int i = 0; i < 256; ++i) {
+        if (i % 16 == 0) cout << endl;
+        cout << " " << (int)(255 * pow(i/255.f, 1/2.2)) << ",";
+    }
+    cout << endl;
     merge(gamma_planes, gamma);
     flip(gamma, gamma, 0);
 

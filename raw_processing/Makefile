@@ -15,7 +15,7 @@ BUILD_DIR = ./build
 
 OBJECTS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(notdir $(SOURCE_FILES)))
 
-INCLUDES= -I./bayder_domain/inc -I./rgb_domain/inc
+INCLUDES= -I./bayder_domain -I./rgb_domain
 
 $(PROJECT_NAME): $(OBJECTS)
 	$(CC) -o $(PROJECT_NAME) $(OBJECTS) $(OPENCV_FLAGS_LINK)
