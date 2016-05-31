@@ -10,6 +10,11 @@ int simpleCcmMatrix[3][3] = {
 };
 
 void color_correction::applySimpleCCM(Mat &_rgb) {
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            cout << simpleCcmMatrix[i][j] << endl;
+        }
+    }
     typedef Point3_<uchar> Pixel;
     for (int row = 0; row < _rgb.rows; ++row) {
         Pixel* bgr = _rgb.ptr<Pixel>(row);

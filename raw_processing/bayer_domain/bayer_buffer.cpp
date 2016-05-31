@@ -41,10 +41,13 @@ bool bayer_buffer::init(const char *_file, int _height, int _width, int _bitdept
     }
 
     rewind(fp);
+    uchar *bayerBuffer = new uchar[fileSize];
+    int rc = fread(bayerBuffer, 1, fileSize, fp);
+    cout << "rc = " << rc << endl;
 
     bayer.create(_height, _width, CV_16UC1);
     if (_bitdepths == 12) {
-        fastParserBayer12(fp, bayer);
+        fastParserBayer12(bayerBuffer, bayer);
     } else {
         for (int i = 0; i < _height; ++i) {
             for (int j = 0; j < _width; ++j) {
@@ -76,16 +79,15 @@ void bayer_buffer::setPattern(Bayer_Pattern_Type _pattern) {
     pattern  = _pattern;
 }
 
-void bayer_buffer::fastParserBayer12(FILE *fp, Mat bayer) {
+void bayer_buffer::fastParserBayer12(uchar *_bayerBuffer, Mat _bayer) {
 
-    MatIterator_<ushort> it = bayer.begin<ushort>(),
-        it_end = bayer.end<ushort>();
+    MatIterator_<ushort> it = _bayer.begin<ushort>(),
+        it_end = _bayer.end<ushort>();
+    two_pixel * pixel = (two_pixel *)_bayerBuffer;
     while (it!=it_end) {
-        int a = fgetc(fp);
-        int b = fgetc(fp);
-        int c = fgetc(fp);
-        *it++ = (ushort)((a << 4) |(b>>4) &0xFFF);
-        *it++ = (ushort)(((b << 8) | c) &0xFFF);
+        *it++ = (ushort)(pixel->a);
+        *it++ = (ushort)(pixel->b);
+        ++pixel;
     }
 }
 

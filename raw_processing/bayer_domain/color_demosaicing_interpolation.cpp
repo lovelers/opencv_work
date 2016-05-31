@@ -7,7 +7,7 @@
 using namespace std;
 using namespace cv;
 
-#if 0
+#if 1
 float demosaicing::sDemosaicingCofficient[RGB_PATTERN_MAX] = {
     1/8.f, 1/8.f, 1/8.f,
     1/8.f, 1/8.f, 1/8.f,
