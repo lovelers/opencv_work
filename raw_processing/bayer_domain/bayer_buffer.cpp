@@ -49,21 +49,9 @@ bool bayer_buffer::init(const char *_file, int _height, int _width, int _bitdept
     if (_bitdepths == 12) {
         fastParserBayer12(bayerBuffer, bayer);
     } else {
-        for (int i = 0; i < _height; ++i) {
-            for (int j = 0; j < _width; ++j) {
-                int bits = (i * _width + j) * _bitdepths;
-                int seekpos = (bits >> 3);
-                int offset = bits % 8;
-                fseek(fp, seekpos, SEEK_SET);
-                int c0 = fgetc(fp) & 0xFF;
-                int c1 = fgetc(fp) & 0xFF;
-                int c2 = fgetc(fp) & 0xFF;
-                int res = ((c0 << 16) | (c1 << 8) | c2);
-                res = ((res << offset) >> (24 - _bitdepths));
-                bayer.at<ushort>(i, j) = res;
-            }
-        }
+        cout << "can't support bitdepths:" << _bitdepths << endl;
     }
+
     cout << "fileSize = " << fileSize << ",seekto = " << ftell(fp)<< endl;
 
     fclose(fp);
@@ -80,7 +68,6 @@ void bayer_buffer::setPattern(Bayer_Pattern_Type _pattern) {
 }
 
 void bayer_buffer::fastParserBayer12(uchar *_bayerBuffer, Mat _bayer) {
-
     MatIterator_<ushort> it = _bayer.begin<ushort>(),
         it_end = _bayer.end<ushort>();
     two_pixel * pixel = (two_pixel *)_bayerBuffer;
@@ -90,4 +77,3 @@ void bayer_buffer::fastParserBayer12(uchar *_bayerBuffer, Mat _bayer) {
         ++pixel;
     }
 }
-

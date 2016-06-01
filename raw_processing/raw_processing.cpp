@@ -26,23 +26,24 @@ const Mat& raw_processing::getBayerMat() {
     return bayer->getMat();
 }
 
-void raw_processing::demosaicing(const Mat& bayer, Mat *rgbMat, int bayerPattern) {
-    demosaicing::convert(bayer, rgbMat, bayerPattern);
+void raw_processing::demosaicing(const Mat1w& bayer, Mat3w *rgb, int bayerPattern) {
+    demosaicing::convert(bayer, rgb, bayerPattern);
 }
 
 
-void raw_processing::applyWBGains(Mat &bayer8, int rGains, int gGains, int bGains, int pattern) {
-    white_balance::applyWBGains(bayer8, rGains, gGains, bGains, pattern);
+void raw_processing::applyWBGains(Mat1w &bayer, int rGains, int gGains, int bGains, int pattern) {
+    //white_balance::applyWBGains(bayer, rGains, gGains, bGains, pattern);
 }
 
-void raw_processing::deNoise(Mat& _bayer8, int _denoiseType, int _bayerPattern) {
-    noise_reduction::deNoise(_bayer8, _denoiseType, _bayerPattern);
+void raw_processing::deNoise(Mat1w& _bayer, int _denoiseType, int _bayerPattern) {
+    noise_reduction::deNoise(_bayer, _denoiseType, _bayerPattern);
 }
 
-void raw_processing::applyCcm(Mat &_rgb) {
-    color_correction::applySimpleCCM(_rgb);
+void raw_processing::applyCcm(Mat3w &_rgb, ushort _max) {
+    color_correction::applySimpleCCM(_rgb, _max);
 }
 
-void raw_processing::applyGamma(Mat& _rgb) {
-    gamma_correction::applySimpleGamma(_rgb);
+void raw_processing::applyGamma(Mat3w& _rgb, int _indoorOutdoor, int _intensityMax) {
+    //gamma_correction::applySimpleGamma(_rgb);
+    gamma_correction::getInstance().applyGamma(_rgb, _indoorOutdoor, _intensityMax);
 }

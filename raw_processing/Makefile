@@ -10,12 +10,12 @@ CFLAGS := -fpermissive
 
 all: $(PROJECT_NAME)
 
-SOURCE_FILES = $(wildcard *.cpp) $(wildcard bayer_domain/*.cpp) $(wildcard rgb_domain/*.cpp)
+SOURCE_FILES = $(wildcard *.cpp) $(wildcard bayer_domain/*.cpp) $(wildcard rgb_domain/*.cpp) $(wildcard tuning/*.cpp)
 BUILD_DIR = ./build
 
 OBJECTS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(notdir $(SOURCE_FILES)))
 
-INCLUDES= -I./bayder_domain -I./rgb_domain
+INCLUDES= -I./bayder_domain -I./rgb_domain -I./tuning
 
 $(PROJECT_NAME): $(OBJECTS)
 	$(CC) -o $(PROJECT_NAME) $(OBJECTS) $(OPENCV_FLAGS_LINK)

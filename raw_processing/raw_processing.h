@@ -20,12 +20,12 @@ class raw_processing {
         }
         bool selectRawFile(const char *_file, int _height, int _width, int _bitdepths);
         const Mat& getBayerMat();
-        void deNoise(Mat& _bayer8, int _denoiseType, int _bayerPattern);
-        void applyWBGains(Mat& _bayer, int _rGains, int _gGains, int _bGains, int _pattern);
-        void demosaicing(const Mat& _bayer, Mat *_rgbMat, int _bayerPattern);
+        void deNoise(Mat1w & _bayer, int _denoiseType, int _bayerPattern);
+        void applyWBGains(Mat1w& _bayer, int _rGains, int _gGains, int _bGains, int _pattern);
+        void demosaicing(const Mat1w& _bayer, Mat3w *_rgb, int _bayerPattern);
 
-        void applyCcm(Mat &_rgb);
-        void applyGamma(Mat &_rgb);
+        void applyCcm(Mat3w &_rgb, ushort _max);
+        void applyGamma(Mat3w &_rgb, int _indoorOutdoor, int _intensityMax);
         ~raw_processing();
 
     private:

@@ -19,6 +19,7 @@ class bayer_buffer {
             unsigned int a : 12;
             unsigned int b : 12;
         } __attribute__((__packed__)) two_pixel;
+
         bayer_buffer();
         bool init(const char *_file, int _height, int _width, int _bitdepths);
         void uninit();

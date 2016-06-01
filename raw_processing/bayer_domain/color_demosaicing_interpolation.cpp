@@ -228,30 +228,29 @@ int demosaicing::sDemosaicingPattern[] = {
 };
 #endif
 
-void demosaicing::convert(const Mat& bayerMat, Mat *rgbMat, int bayerPattern) {
+void demosaicing::convert(const Mat1w& bayer, Mat3w *rgb, int bayerPattern) {
     int border = 2;
-    Mat padded;
-    copyMakeBorder(bayerMat, padded, border, border, border, border, BORDER_REFLECT_101);
+    Mat1w padded;
+    copyMakeBorder(bayer, padded, border, border, border, border, BORDER_REFLECT_101);
     cout << "padded. height = " << padded.rows << "width = " << padded.cols << endl;
-    cout << "bayerMat. height = " << bayerMat.rows << "width = " << bayerMat.cols << endl;
-    if (rgbMat == NULL) {
+    cout << "bayer. height = " << bayer.rows << "width = " << bayer.cols << endl;
+    if (rgb == NULL) {
         return;
-        //rgbMat = new Mat(bayerMat.rows(), bayerMat.cols(), CV_8UC3);
     }
 
     cout << "bayerPattern = " << bayerPattern << endl;
     switch(bayerPattern) {
         case bayer_buffer::BAYER_RGrGbB:
-            convertRGrGbB(padded, rgbMat, bayerMat.rows, bayerMat.cols, border);
+            convertRGrGbB(padded, rgb, bayer.rows, bayer.cols, border);
             break;
         case bayer_buffer::BAYER_GrRBGb:
-            convertGrRBGb(padded, rgbMat, bayerMat.rows, bayerMat.cols, border);
+            convertGrRBGb(padded, rgb, bayer.rows, bayer.cols, border);
             break;
         case bayer_buffer::BAYER_BGbGrR:
-            convertBGbGrR(padded, rgbMat, bayerMat.rows, bayerMat.cols, border);
+            convertBGbGrR(padded, rgb, bayer.rows, bayer.cols, border);
             break;
         case bayer_buffer::BAYER_GbBRGr:
-            convertGbBRGr(padded, rgbMat, bayerMat.rows, bayerMat.cols, border);
+            convertGbBRGr(padded, rgb, bayer.rows, bayer.cols, border);
             break;
         default:
             cout <<"unsupport bayer pattern type:" << endl;
@@ -259,30 +258,30 @@ void demosaicing::convert(const Mat& bayerMat, Mat *rgbMat, int bayerPattern) {
     }
 }
 
-void demosaicing::convertRGrGbB(const Mat& padded, Mat *rgbMat, int _height, int _width, int border) {
+void demosaicing::convertRGrGbB(const Mat1w& padded, Mat3w *rgb, int _height, int _width, int border) {
     cout << "height x width = " << _height << "x" << _width <<endl;
-    typedef Point3_<uchar> Pixel;
+    typedef Point3_<ushort> Pixel;
     for (int h = 0; h < _height; ++h) {
-        Pixel* bgr = rgbMat->ptr<Pixel>(h);
+        Pixel* bgr = rgb->ptr<Pixel>(h);
         //color b g r map to point x, y , z
         for (int w = 0; w < _width; w+=2) {
             if (h % 2 == 0) {
-                Mat bayerRMat(padded, Rect(w, h, 5, 5));
+                Mat1w bayerRMat(padded, Rect(w, h, 5, 5));
                 bgr[w].z = calcBayerWithPattern(bayerRMat, RR_PATTERN);
                 bgr[w].y = calcBayerWithPattern(bayerRMat, GR_PATTERN);
                 bgr[w].x = calcBayerWithPattern(bayerRMat, BR_PATTERN);
 
-                Mat bayerGrMat(padded, Rect((w+1), h, 5, 5));
+                Mat1w bayerGrMat(padded, Rect((w+1), h, 5, 5));
                 bgr[w+1].z = calcBayerWithPattern(bayerGrMat, RGr_PATTERN);
                 bgr[w+1].y = calcBayerWithPattern(bayerGrMat, GGr_PATTERN);
                 bgr[w+1].x = calcBayerWithPattern(bayerGrMat, BGr_PATTERN);
             } else {
-                Mat bayerGbMat(padded, Rect(w, h, 5, 5));
+                Mat1w bayerGbMat(padded, Rect(w, h, 5, 5));
                 bgr[w].z = calcBayerWithPattern(bayerGbMat, RGb_PATTERN);
                 bgr[w].y = calcBayerWithPattern(bayerGbMat, GGb_PATTERN);
                 bgr[w].x = calcBayerWithPattern(bayerGbMat, BGb_PATTERN);
 
-                Mat bayerBMat(padded, Rect((w+1), h, 5, 5));
+                Mat1w bayerBMat(padded, Rect((w+1), h, 5, 5));
                 bgr[w+1].z   = calcBayerWithPattern(bayerBMat, RB_PATTERN);
                 bgr[w+1].y   = calcBayerWithPattern(bayerBMat, GB_PATTERN);
                 bgr[w+1].x   = calcBayerWithPattern(bayerBMat, BB_PATTERN);
@@ -291,31 +290,62 @@ void demosaicing::convertRGrGbB(const Mat& padded, Mat *rgbMat, int _height, int
     }
 }
 
-void demosaicing::convertGrRBGb(const Mat& padded, Mat *rgbMat, int _height, int _width, int border) {
+void demosaicing::convertGrRBGb(const Mat1w& padded, Mat3w *rgb, int _height, int _width, int border) {
     cout << "height x width = " << _height << "x" << _width <<endl;
-    typedef Point3_<uchar> Pixel;
+    Mat3w bgr = *rgb;
     for (int h = 0; h < _height; ++h) {
-        Pixel* bgr = rgbMat->ptr<Pixel>(h);
-        //color b g r map to point x, y , z
         for (int w = 0; w < _width; w+=2) {
             if (h % 2 == 0) {
-                Mat bayerGrMat(padded, Rect(w, h, 5, 5));
+                Mat1w bayerGrMat(padded, Rect(w, h, 5, 5));
+                bgr(h, w)[2] = calcBayerWithPattern(bayerGrMat, RGr_PATTERN);
+                bgr(h, w)[1] = calcBayerWithPattern(bayerGrMat, GGr_PATTERN);
+                bgr(h, w)[0] = calcBayerWithPattern(bayerGrMat, BGr_PATTERN);
+
+                Mat1w bayerRMat(padded, Rect(w+1, h, 5, 5));
+                bgr(h, w+1)[2] = calcBayerWithPattern(bayerRMat, RR_PATTERN);
+                bgr(h, w+1)[1] = calcBayerWithPattern(bayerRMat, GR_PATTERN);
+                bgr(h, w+1)[0] = calcBayerWithPattern(bayerRMat, BR_PATTERN);
+
+            } else {
+                Mat1w bayerBMat(padded, Rect(w, h, 5, 5));
+                bgr(h, w)[2]  = calcBayerWithPattern(bayerBMat, RB_PATTERN);
+                bgr(h, w)[1]  = calcBayerWithPattern(bayerBMat, GB_PATTERN);
+                bgr(h, w)[0]  = calcBayerWithPattern(bayerBMat, BB_PATTERN);
+
+                Mat1w bayerGbMat(padded, Rect(w+1, h, 5, 5));
+                bgr(h, w+1)[2] = calcBayerWithPattern(bayerGbMat, RGb_PATTERN);
+                bgr(h, w+1)[1] = calcBayerWithPattern(bayerGbMat, GGb_PATTERN);
+                bgr(h, w+1)[0] = calcBayerWithPattern(bayerGbMat, BGb_PATTERN);
+            }
+        }
+    }
+}
+
+void demosaicing::convertBGbGrR(const Mat1w& padded, Mat3w *rgb, int _height, int _width, int border) {
+    cout << "height x width = " << _height << "x" << _width <<endl;
+    typedef Point3_<ushort> Pixel;
+    for (int h = 0; h < _height; ++h) {
+        Pixel* bgr = rgb->ptr<Pixel>(h);
+        //color b g r map to point x, y , z
+        for (int w = 0; w < _width; w+=2) {
+            if (h % 2 == 1) {
+                Mat1w bayerGrMat(padded, Rect(w, h, 5, 5));
                 bgr[w].z = calcBayerWithPattern(bayerGrMat, RGr_PATTERN);
                 bgr[w].y = calcBayerWithPattern(bayerGrMat, GGr_PATTERN);
                 bgr[w].x = calcBayerWithPattern(bayerGrMat, BGr_PATTERN);
 
-                Mat bayerRMat(padded, Rect(w+1, h, 5, 5));
+                Mat1w bayerRMat(padded, Rect(w+1, h, 5, 5));
                 bgr[w+1].z = calcBayerWithPattern(bayerRMat, RR_PATTERN);
                 bgr[w+1].y = calcBayerWithPattern(bayerRMat, GR_PATTERN);
                 bgr[w+1].x = calcBayerWithPattern(bayerRMat, BR_PATTERN);
 
             } else {
-                Mat bayerBMat(padded, Rect(w, h, 5, 5));
+                Mat1w bayerBMat(padded, Rect(w, h, 5, 5));
                 bgr[w].z   = calcBayerWithPattern(bayerBMat, RB_PATTERN);
                 bgr[w].y   = calcBayerWithPattern(bayerBMat, GB_PATTERN);
                 bgr[w].x   = calcBayerWithPattern(bayerBMat, BB_PATTERN);
 
-                Mat bayerGbMat(padded, Rect(w+1, h, 5, 5));
+                Mat1w bayerGbMat(padded, Rect(w+1, h, 5, 5));
                 bgr[w+1].z = calcBayerWithPattern(bayerGbMat, RGb_PATTERN);
                 bgr[w+1].y = calcBayerWithPattern(bayerGbMat, GGb_PATTERN);
                 bgr[w+1].x = calcBayerWithPattern(bayerGbMat, BGb_PATTERN);
@@ -324,63 +354,30 @@ void demosaicing::convertGrRBGb(const Mat& padded, Mat *rgbMat, int _height, int
     }
 }
 
-void demosaicing::convertBGbGrR(const Mat& padded, Mat *rgbMat, int _height, int _width, int border) {
+void demosaicing::convertGbBRGr(const Mat1w& padded, Mat3w *rgb, int _height, int _width, int border) {
     cout << "height x width = " << _height << "x" << _width <<endl;
-    typedef Point3_<uchar> Pixel;
+    typedef Point3_<ushort> Pixel;
     for (int h = 0; h < _height; ++h) {
-        Pixel* bgr = rgbMat->ptr<Pixel>(h);
+        Pixel* bgr = rgb->ptr<Pixel>(h);
         //color b g r map to point x, y , z
         for (int w = 0; w < _width; w+=2) {
             if (h % 2 == 1) {
-                Mat bayerGrMat(padded, Rect(w, h, 5, 5));
-                bgr[w].z = calcBayerWithPattern(bayerGrMat, RGr_PATTERN);
-                bgr[w].y = calcBayerWithPattern(bayerGrMat, GGr_PATTERN);
-                bgr[w].x = calcBayerWithPattern(bayerGrMat, BGr_PATTERN);
-
-                Mat bayerRMat(padded, Rect(w+1, h, 5, 5));
-                bgr[w+1].z = calcBayerWithPattern(bayerRMat, RR_PATTERN);
-                bgr[w+1].y = calcBayerWithPattern(bayerRMat, GR_PATTERN);
-                bgr[w+1].x = calcBayerWithPattern(bayerRMat, BR_PATTERN);
-
-            } else {
-                Mat bayerBMat(padded, Rect(w, h, 5, 5));
-                bgr[w].z   = calcBayerWithPattern(bayerBMat, RB_PATTERN);
-                bgr[w].y   = calcBayerWithPattern(bayerBMat, GB_PATTERN);
-                bgr[w].x   = calcBayerWithPattern(bayerBMat, BB_PATTERN);
-
-                Mat bayerGbMat(padded, Rect(w+1, h, 5, 5));
-                bgr[w+1].z = calcBayerWithPattern(bayerGbMat, RGb_PATTERN);
-                bgr[w+1].y = calcBayerWithPattern(bayerGbMat, GGb_PATTERN);
-                bgr[w+1].x = calcBayerWithPattern(bayerGbMat, BGb_PATTERN);
-            }
-        }
-    }
-}
-
-void demosaicing::convertGbBRGr(const Mat& padded, Mat *rgbMat, int _height, int _width, int border) {
-    cout << "height x width = " << _height << "x" << _width <<endl;
-    typedef Point3_<uchar> Pixel;
-    for (int h = 0; h < _height; ++h) {
-        Pixel* bgr = rgbMat->ptr<Pixel>(h);
-        //color b g r map to point x, y , z
-        for (int w = 0; w < _width; w+=2) {
-            if (h % 2 == 1) {
-                Mat bayerRMat(padded, Rect(w, h, 5, 5));
+                Mat1w bayerRMat(padded, Rect(w, h, 5, 5));
                 bgr[w].z = calcBayerWithPattern(bayerRMat, RR_PATTERN);
                 bgr[w].y = calcBayerWithPattern(bayerRMat, GR_PATTERN);
                 bgr[w].x = calcBayerWithPattern(bayerRMat, BR_PATTERN);
 
-                Mat bayerGrMat(padded, Rect((w+1), h, 5, 5));
+                Mat1w bayerGrMat(padded, Rect((w+1), h, 5, 5));
                 bgr[w+1].z = calcBayerWithPattern(bayerGrMat, RGr_PATTERN);
                 bgr[w+1].y = calcBayerWithPattern(bayerGrMat, GGr_PATTERN);
                 bgr[w+1].x = calcBayerWithPattern(bayerGrMat, BGr_PATTERN);
             } else {
-                Mat bayerGbMat(padded, Rect(w, h, 5, 5));
+                Mat1w bayerGbMat(padded, Rect(w, h, 5, 5));
                 bgr[w].z = calcBayerWithPattern(bayerGbMat, RGb_PATTERN);
                 bgr[w].y = calcBayerWithPattern(bayerGbMat, GGb_PATTERN);
                 bgr[w].x = calcBayerWithPattern(bayerGbMat, BGb_PATTERN);
 
-                Mat bayerBMat(padded, Rect((w+1), h, 5, 5));
+                Mat1w bayerBMat(padded, Rect((w+1), h, 5, 5));
                 bgr[w+1].z   = calcBayerWithPattern(bayerBMat, RB_PATTERN);
                 bgr[w+1].y   = calcBayerWithPattern(bayerBMat, GB_PATTERN);
                 bgr[w+1].x   = calcBayerWithPattern(bayerBMat, BB_PATTERN);
@@ -389,24 +386,18 @@ void demosaicing::convertGbBRGr(const Mat& padded, Mat *rgbMat, int _height, int
     }
 }
 
-
-uchar demosaicing::calcBayerWithPattern(const Mat& bayerMat, int pattern) {
+ushort demosaicing::calcBayerWithPattern(const Mat1w& bayer, int pattern) {
     int result = 0;
     int *patternStart = sDemosaicingPattern;
     patternStart += pattern * 25;
     for (int i = 0; i < 5; ++i) {
         for (int j = 0; j < 5; ++j) {
             if (patternStart[5*i +j] != 0) {
-                result += (int)(bayerMat.at<uchar>(i, j)) * patternStart[5*i + j];
+                result += (int)(bayer(i,j)) * patternStart[5*i + j];
             }
         }
     }
     result = result * sDemosaicingCofficient[pattern];
-    if (result > 255) result = 255;
-    /*
-       if (result > (1 << 16)) {
-       result = (1 << 16);
-       }
-       */
-    return (uchar)result;
+    result = result < 0 ? 0 : (result > 0xFFFF ? 0xFFFF : result);
+    return (ushort) result;
 }

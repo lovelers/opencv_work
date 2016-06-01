@@ -1,4 +1,5 @@
 #include "gamma_correction.h"
+#include <iostream>
 
 using namespace std;
 using namespace cv;
@@ -33,4 +34,108 @@ void gamma_correction::applySimpleGamma(Mat &_rgb) {
         }
     }
 
+}
+
+gamma_correction::gamma_correction() {
+    tuning = meizu_tuning_get_gamma();
+    float gamma = tuning->base_config.normalGamma;
+    int baseOffset = tuning->base_config.normalBaseOffset;
+    int endOffset = tuning->base_config.normalEndOffset;
+    U32 linearity = tuning->base_config.normalLinearityWeight;
+    initGamma(gammaNormal, gamma, baseOffset, endOffset, linearity);
+
+    // indoor
+    gamma = tuning->base_config.indoorGamma;
+    baseOffset = tuning->base_config.indoorBaseOffset;
+    endOffset = tuning->base_config.indoorEndOffset;
+    linearity = tuning->base_config.indoorLinearityWeight;
+    initGamma(gammaIndoor, gamma, baseOffset, endOffset, linearity);
+
+    // outdoor
+    gamma = tuning->base_config.outdoorGamma;
+    baseOffset = tuning->base_config.outdoorBaseOffset;
+    endOffset = tuning->base_config.outdoorEndOffset;
+    linearity = tuning->base_config.outdoorLinearityWeight;
+    initGamma(gammaOutdoor, gamma, baseOffset, endOffset, linearity);
+}
+
+void gamma_correction::initGamma(U32 *_table, float _gamma, int _baseOffset, int _endOffset, int _linearity) {
+    float C = (GAMMA_MAX_VALUE - _baseOffset + _endOffset) /pow (GAMMA_MAX_VALUE, _gamma);
+    int result = 0;
+    for (int i = 0; i < GAMMA_TABLE_COUNT; ++i) {
+        result  = C * pow (tuning->base_config.gamma_table_x[i], _gamma) + _baseOffset;
+        _table[i] = (result < 0) ? 0 : (result > GAMMA_MAX_VALUE) ? GAMMA_MAX_VALUE : result;
+    }
+}
+
+void gamma_correction::applyGamma(Mat3w& _rgb, int _indoorOutdoorWeight, int _intensityMax) {
+    U32 gammaResult[GAMMA_TABLE_COUNT];
+    U32 localGammaResult[_intensityMax];
+    if (_indoorOutdoorWeight > 128) {
+        float outdoorRatio = (_indoorOutdoorWeight - 128) / 128.f;
+        for (int i = 0; i < GAMMA_TABLE_COUNT; ++i) {
+            gammaResult[i] = (1.f - outdoorRatio) * gammaNormal[i]
+                + outdoorRatio * gammaOutdoor[i];
+        }
+    } else {
+        float indoorRatio = 1 - _indoorOutdoorWeight / 128.f;
+        for (int i = 0; i < GAMMA_TABLE_COUNT; ++i) {
+            gammaResult[i] = (1.f - indoorRatio) * gammaNormal[i]
+                + indoorRatio * gammaIndoor[i];
+        }
+    }
+    for (int i = 0; i < GAMMA_TABLE_COUNT; ++i) {
+        gammaResult[i] *= tuning->base_config.user_gamma[i];
+    }
+
+    if (_intensityMax <= GAMMA_MAX_VALUE) {
+        int base = GAMMA_MAX_VALUE / _intensityMax;
+        localGammaResult[0] = getGammaResult(gammaResult, 0, true) / base;
+        for (int i = 1; i < _intensityMax; ++i) {
+            localGammaResult[i] = getGammaResult(gammaResult, i * base, false) / base;
+        }
+    } else {
+        U32 tmpGammaResult[GAMMA_MAX_VALUE];
+        int detla = _intensityMax / GAMMA_MAX_VALUE;
+        tmpGammaResult[0] = getGammaResult(gammaResult, 0, true);
+        for (int i = 1; i < GAMMA_MAX_VALUE; ++i) {
+            tmpGammaResult[i] = getGammaResult(gammaResult, i, false);
+        }
+
+        for (int i = 0; i < _intensityMax; ++i) {
+            localGammaResult[i] = tmpGammaResult[i/detla] * detla;
+        }
+    }
+
+    for (int row = 0; row < _rgb.rows; ++row) {
+        for (int col = 0; col < _rgb.cols; ++col) {
+            _rgb(row, col)[0] = localGammaResult[_rgb(row,col)[0]];
+            _rgb(row, col)[1] = localGammaResult[_rgb(row,col)[1]];
+            _rgb(row, col)[2] = localGammaResult[_rgb(row,col)[2]];
+        }
+    }
+}
+
+U32 gamma_correction::getGammaResult(U32 *_table, int _x, bool _isFirst) {
+    static int s = 0;
+    static float a = 0.f;
+    static float b = 0.f;
+    if (_isFirst) s = 0;
+    for (int i = s; i < GAMMA_TABLE_COUNT; i++) {
+        if (_x == tuning->base_config.gamma_table_x[i]) {
+            return _table[i];
+        } else if (_x < tuning->base_config.gamma_table_x[i]) {
+            if (i != s) {
+                U32 x1 = tuning->base_config.gamma_table_x[i-1];
+                U32 y1 = _table[i-1];
+                U32 x2 = tuning->base_config.gamma_table_x[i];
+                U32 y2 = _table[i];
+                // y = ax + b.
+                a = (y2 - y1) / (float)(x2 - x1);
+                b = y1 - a * x1;
+                s = i;
+            }
+            return a * _x + b;
+        }
+    }
 }
