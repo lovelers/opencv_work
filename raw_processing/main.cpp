@@ -10,7 +10,7 @@ using namespace std;
 #define RAW_WIDTH_DEFAULT 5312
 #define RAW_HEIGHT_DEFAULT 3984
 #define RAW_BITDEPTHS_DEFAULT 12
-#define RAW_FILE_NAME "./res/raw1.buffer"
+#define RAW_FILE_NAME_DEFAULT "./res/raw.buffer"
 
 #define USE_OPENCV_TEST false
 #define PROCESSING_BAYER_16 true
@@ -20,7 +20,7 @@ using namespace std;
 int main(int argc, char**argv) {
     int height = RAW_HEIGHT_DEFAULT;
     int width = RAW_WIDTH_DEFAULT;
-    const char *file = RAW_FILE_NAME;
+    const char *file = (argc > 1) ? argv[1] : RAW_FILE_NAME_DEFAULT;
     int bitdepths = RAW_BITDEPTHS_DEFAULT;
     //int pattern = bayer_buffer::BAYER_RGrGbB;
     int pattern = bayer_buffer::BAYER_GrRBGb;
@@ -38,7 +38,7 @@ int main(int argc, char**argv) {
     Mat1w bayer8(height, width);
     for (int row = 0; row < bayerMat.rows; ++row) {
         for (int col = 0; col < bayerMat.cols; ++col) {
-            bayer8(row, col) = (ushort)(bayerMat.at<ushort>(row, col)>>4  & 0xFF);
+            bayer8(row, col) = (ushort)(bayerMat.at<ushort>(row, col)>>4 & 0xFF);
         }
     }
 
@@ -46,13 +46,19 @@ int main(int argc, char**argv) {
     fwrite(bayer8.data, 1, height * width * sizeof(uchar), fp8);
     fclose(fp8);
 
-    raw.deNoise(bayer8, noise_reduction::AVERAGE_DENOISE, pattern);
+    raw.deNoiseBayerDomain(bayer8, bayer_noise_reduction::AVERAGE_DENOISE, pattern);
 
     Mat3w rgb8(height, width);
     raw.demosaicing(bayer8, &rgb8, pattern);
     raw.applyCcm(rgb8, 255);
+#if 0
     raw.applyGamma(rgb8, 128, 0xFF + 1);
 
+    Mat3w yuv8(height, width);
+    raw.rgb2yuv(rgb8, yuv8);
+    raw.histEqualization(yuv8, 0xFF);
+    raw.yuv2rgb(yuv8, rgb8);
+#endif
     Mat3b rgb8b(height, width);
     for (int row = 0; row < rgb8.rows; ++row) {
         for (int col = 0; col < rgb8.cols; ++col) {
@@ -114,7 +120,7 @@ int main(int argc, char**argv) {
             break;
     }
     raw.applyCcm(imgColor, 255);
-    raw.applyGamma(imgColor, 128, 0xFF + 1);
+    //raw.applyGamma(imgColor, 128, 0xFF + 1);
 
     Mat3b rgb8bb(height, width);
     for (int row = 0; row < rgb8.rows; ++row) {
@@ -142,7 +148,7 @@ int main(int argc, char**argv) {
     FILE *fp16 = fopen("res/bayer16.raw", "wb");
     fwrite(bayer16.data, 1, height * width * sizeof(ushort), fp16);
     fclose(fp16);
-    raw.deNoise(bayer16, noise_reduction::AVERAGE_DENOISE, pattern);
+    raw.deNoiseBayerDomain(bayer16, bayer_noise_reduction::AVERAGE_DENOISE, pattern);
 
 #if USE_OPENCV_TEST
     Mat1w imgGray(height, width);
@@ -169,11 +175,11 @@ int main(int argc, char**argv) {
 #endif
     Mat3w rgb16(height, width);
     raw.demosaicing(bayer16, &rgb16, pattern);
-    raw.applyCcm(rgb16, 0xFFFF);
-    raw.applyGamma(rgb16, 128, 0xFFFF + 1);
-    imwrite("res/rgb16.jpg", rgb16);
+    //raw.applyCcm(rgb16, 0xFFFF);
+    //raw.applyGamma(rgb16, 128, 0xFFFF + 1);
+    imwrite("res/rgb16.png", rgb16);
     resize(rgb16, rgb16, Size(800, 600));
-    imshow("rgb16.jpg", rgb16);
+    imshow("rgb16.png", rgb16);
     waitKey();
 #endif
     return 0;

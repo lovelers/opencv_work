@@ -1,16 +1,16 @@
-#include "noise_reduction.h"
+#include "bayer_noise_reduction.h"
 #include <iostream>
 #include "bayer_buffer.h"
 using namespace cv;
 using namespace std;
 
-void noise_reduction::deNoise(Mat1w& _bayer, int _denoiseType, int _bayerPattern) {
+void bayer_noise_reduction::deNoise(Mat1w& _bayer, int _denoiseType, int _bayerPattern) {
     switch(_denoiseType) {
         case AVERAGE_DENOISE:
-            noise_reduction::averageDeNoise(_bayer, _bayerPattern);
+            bayer_noise_reduction::averageDeNoise(_bayer, _bayerPattern);
             break;
         case MEDIUM_DENOISE:
-            noise_reduction::mediumDeNoise(_bayer, _bayerPattern);
+            bayer_noise_reduction::mediumDeNoise(_bayer, _bayerPattern);
             break;
         default:
             cout << "unsupport denoise type :" << _denoiseType << endl;
@@ -18,7 +18,7 @@ void noise_reduction::deNoise(Mat1w& _bayer, int _denoiseType, int _bayerPattern
     }
 }
 
-void noise_reduction::averageDeNoise(Mat1w& _bayer, int _bayerPattern) {
+void bayer_noise_reduction::averageDeNoise(Mat1w& _bayer, int _bayerPattern) {
     int border = 2;
     Mat1w padded;
     copyMakeBorder(_bayer, padded, border, border, border, border, BORDER_REFLECT_101);
@@ -115,7 +115,7 @@ void noise_reduction::averageDeNoise(Mat1w& _bayer, int _bayerPattern) {
     }
 }
 
-void noise_reduction::mediumDeNoise(Mat1w& _bayer, int _bayerPattern) {
+void bayer_noise_reduction::mediumDeNoise(Mat1w& _bayer, int _bayerPattern) {
     int border = 2;
     Mat1w padded;
     copyMakeBorder(_bayer, padded, border, border, border, border, BORDER_REFLECT_101);

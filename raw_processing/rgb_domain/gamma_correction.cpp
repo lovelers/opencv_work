@@ -23,14 +23,12 @@ const uchar gammaLut2_2[] = {
     248, 248, 249, 249, 249, 250, 250, 251, 251, 252, 252, 253, 253, 254, 254, 255,
 };
 
-void gamma_correction::applySimpleGamma(Mat &_rgb) {
-    typedef Point3_<uchar> Pixel;
+void gamma_correction::applySimpleGamma(Mat3w &_rgb) {
     for (int row = 0; row < _rgb.rows; ++row) {
-        Pixel* bgr = _rgb.ptr<Pixel>(row);
         for (int col = 0; col < _rgb.cols; ++col) {
-            bgr[col].x = gammaLut2_2[bgr[col].x];
-            bgr[col].y = gammaLut2_2[bgr[col].y];
-            bgr[col].z = gammaLut2_2[bgr[col].z];
+            _rgb(row, col)[0] = gammaLut2_2[_rgb(row,col)[0]];
+            _rgb(row, col)[1] = gammaLut2_2[_rgb(row,col)[1]];
+            _rgb(row, col)[2] = gammaLut2_2[_rgb(row,col)[2]];
         }
     }
 
@@ -60,6 +58,8 @@ gamma_correction::gamma_correction() {
 }
 
 void gamma_correction::initGamma(U32 *_table, float _gamma, int _baseOffset, int _endOffset, int _linearity) {
+    // workaround method
+
     float C = (GAMMA_MAX_VALUE - _baseOffset + _endOffset) /pow (GAMMA_MAX_VALUE, _gamma);
     int result = 0;
     for (int i = 0; i < GAMMA_TABLE_COUNT; ++i) {
@@ -70,7 +70,6 @@ void gamma_correction::initGamma(U32 *_table, float _gamma, int _baseOffset, int
 
 void gamma_correction::applyGamma(Mat3w& _rgb, int _indoorOutdoorWeight, int _intensityMax) {
     U32 gammaResult[GAMMA_TABLE_COUNT];
-    U32 localGammaResult[_intensityMax];
     if (_indoorOutdoorWeight > 128) {
         float outdoorRatio = (_indoorOutdoorWeight - 128) / 128.f;
         for (int i = 0; i < GAMMA_TABLE_COUNT; ++i) {
@@ -88,35 +87,24 @@ void gamma_correction::applyGamma(Mat3w& _rgb, int _indoorOutdoorWeight, int _in
         gammaResult[i] *= tuning->base_config.user_gamma[i];
     }
 
-    if (_intensityMax <= GAMMA_MAX_VALUE) {
-        int base = GAMMA_MAX_VALUE / _intensityMax;
-        localGammaResult[0] = getGammaResult(gammaResult, 0, true) / base;
-        for (int i = 1; i < _intensityMax; ++i) {
-            localGammaResult[i] = getGammaResult(gammaResult, i * base, false) / base;
-        }
-    } else {
-        U32 tmpGammaResult[GAMMA_MAX_VALUE];
-        int detla = _intensityMax / GAMMA_MAX_VALUE;
-        tmpGammaResult[0] = getGammaResult(gammaResult, 0, true);
-        for (int i = 1; i < GAMMA_MAX_VALUE; ++i) {
-            tmpGammaResult[i] = getGammaResult(gammaResult, i, false);
-        }
-
-        for (int i = 0; i < _intensityMax; ++i) {
-            localGammaResult[i] = tmpGammaResult[i/detla] * detla;
-        }
+    float localGammaResult[GAMMA_MAX_VALUE];
+    localGammaResult[0] = getGammaResult(gammaResult, 0, true);
+    for (int i = 1; i < GAMMA_MAX_VALUE; ++i) {
+        localGammaResult[i] = getGammaResult(gammaResult, i, false);
     }
+
+    int base = GAMMA_MAX_VALUE / _intensityMax;
 
     for (int row = 0; row < _rgb.rows; ++row) {
         for (int col = 0; col < _rgb.cols; ++col) {
-            _rgb(row, col)[0] = localGammaResult[_rgb(row,col)[0]];
-            _rgb(row, col)[1] = localGammaResult[_rgb(row,col)[1]];
-            _rgb(row, col)[2] = localGammaResult[_rgb(row,col)[2]];
+            _rgb(row, col)[0] = (ushort)(localGammaResult[_rgb(row,col)[0] * base] / base + 0.5f);
+            _rgb(row, col)[1] = (ushort)(localGammaResult[_rgb(row,col)[1] * base] / base + 0.5f);
+            _rgb(row, col)[2] = (ushort)(localGammaResult[_rgb(row,col)[2] * base] / base + 0.5f);
         }
     }
 }
 
-U32 gamma_correction::getGammaResult(U32 *_table, int _x, bool _isFirst) {
+float gamma_correction::getGammaResult(U32 *_table, int _x, bool _isFirst) {
     static int s = 0;
     static float a = 0.f;
     static float b = 0.f;

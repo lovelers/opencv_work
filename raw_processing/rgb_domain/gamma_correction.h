@@ -9,7 +9,7 @@ typedef unsigned int U32;
 
 class gamma_correction {
     public:
-        static void applySimpleGamma(Mat& _rgb);
+        static void applySimpleGamma(Mat3w& _rgb);
 
         static gamma_correction& getInstance() {
             static gamma_correction gamma;
@@ -26,6 +26,6 @@ class gamma_correction {
         U32 gammaNormal[GAMMA_TABLE_COUNT];
         U32 gammaOutdoor[GAMMA_TABLE_COUNT];
         void initGamma(U32 *_table, float _gamma, int _baseOffset, int _endOffset, int _linearity);
-        U32 getGammaResult(U32 *_table, int _x, bool _isFirst);
+        float getGammaResult(U32 *_table, int _x, bool _isFirst);
 };
 #endif// __GAMMA_CORRECTION_H

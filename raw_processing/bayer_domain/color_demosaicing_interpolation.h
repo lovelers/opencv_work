@@ -10,18 +10,18 @@ using namespace cv;
 class demosaicing {
     public:
         /*
-         * R, Gr, R, Gr, R, Gr, R, Gr, R, Gr, R, Gr
-         * Gb, B, Gb, B, Gb, B, Gb, B, Gb, B, Gb, B
-         * R, Gr, R, Gr, R, Gr, R, Gr, R, Gr, R, Gr
-         * Gb, B, Gb, B, Gb, B, Gb, B, Gb, B, Gb, B
-         * R, Gr, R, Gr, R, Gr, R, Gr, R, Gr, R, Gr
-         * Gb, B, Gb, B, Gb, B, Gb, B, Gb, B, Gb, B
-         * R, Gr, R, Gr, R, Gr, R, Gr, R, Gr, R, Gr
-         * Gb, B, Gb, B, Gb, B, Gb, B, Gb, B, Gb, B
-         * R, Gr, R, Gr, R, Gr, R, Gr, R, Gr, R, Gr
-         * Gb, B, Gb, B, Gb, B, Gb, B, Gb, B, Gb, B
-         * R, Gr, R, Gr, R, Gr, R, Gr, R, Gr, R, Gr
-         * Gb, B, Gb, B, Gb, B, Gb, B, Gb, B, Gb, B
+         * Gr, R, Gr, R, Gr, R, Gr, R, Gr, R, Gr
+         *  B, Gb, B, Gb, B, Gb, B, Gb, B, Gb, B
+         * Gr, R, Gr, R, Gr, R, Gr, R, Gr, R, Gr
+         *  B, Gb, B, Gb, B, Gb, B, Gb, B, Gb, B
+         * Gr, R, Gr, R, Gr, R, Gr, R, Gr, R, Gr
+         *  B, Gb, B, Gb, B, Gb, B, Gb, B, Gb, B
+         * Gr, R, Gr, R, Gr, R, Gr, R, Gr, R, Gr
+         *  B, Gb, B, Gb, B, Gb, B, Gb, B, Gb, B
+         * Gr, R, Gr, R, Gr, R, Gr, R, Gr, R, Gr
+         *  B, Gb, B, Gb, B, Gb, B, Gb, B, Gb, B
+         * Gr, R, Gr, R, Gr, R, Gr, R, Gr, R, Gr
+         *  B, Gb, B, Gb, B, Gb, B, Gb, B, Gb, B
          */
         enum {
             RR_PATTERN = 0, // R at R location

@@ -35,8 +35,8 @@ void raw_processing::applyWBGains(Mat1w &bayer, int rGains, int gGains, int bGai
     //white_balance::applyWBGains(bayer, rGains, gGains, bGains, pattern);
 }
 
-void raw_processing::deNoise(Mat1w& _bayer, int _denoiseType, int _bayerPattern) {
-    noise_reduction::deNoise(_bayer, _denoiseType, _bayerPattern);
+void raw_processing::deNoiseBayerDomain(Mat1w& _bayer, int _denoiseType, int _bayerPattern) {
+    bayer_noise_reduction::deNoise(_bayer, _denoiseType, _bayerPattern);
 }
 
 void raw_processing::applyCcm(Mat3w &_rgb, ushort _max) {
@@ -46,4 +46,17 @@ void raw_processing::applyCcm(Mat3w &_rgb, ushort _max) {
 void raw_processing::applyGamma(Mat3w& _rgb, int _indoorOutdoor, int _intensityMax) {
     //gamma_correction::applySimpleGamma(_rgb);
     gamma_correction::getInstance().applyGamma(_rgb, _indoorOutdoor, _intensityMax);
+}
+
+void raw_processing::histEqualization(Mat3w & _yuv, int _maxValue) {
+    //yuv_processing::getInstance().equalizationYuv(_yuv, _maxValue);
+    yuv_processing::getInstance().cutLowLevel(_yuv, 64, _maxValue);
+}
+
+void raw_processing::rgb2yuv(const Mat3w & _rgb, Mat3w & _yuv) {
+    color_conversion::rgb_2_yuv(_rgb, _yuv);
+}
+
+void raw_processing::yuv2rgb(const Mat3w & _yuv, Mat3w & _rgb) {
+    color_conversion::yuv_2_rgb(_yuv, _rgb);
 }
