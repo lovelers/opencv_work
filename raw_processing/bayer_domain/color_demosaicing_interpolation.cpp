@@ -228,176 +228,176 @@ int demosaicing::sDemosaicingPattern[] = {
 };
 #endif
 
-void demosaicing::convert(const Mat1w& bayer, Mat3w *rgb, int bayerPattern) {
+void demosaicing::convert(const Mat1w& _bayer, Mat3w *_rgb, int _bayerPattern, int _max) {
     int border = 2;
     Mat1w padded;
-    copyMakeBorder(bayer, padded, border, border, border, border, BORDER_REFLECT_101);
-    cout << "padded. height = " << padded.rows << "width = " << padded.cols << endl;
-    cout << "bayer. height = " << bayer.rows << "width = " << bayer.cols << endl;
-    if (rgb == NULL) {
+    copyMakeBorder(_bayer, padded, border, border, border, border, BORDER_REFLECT_101);
+    cout << "_padded. height = " << padded.rows << "width = " << padded.cols << endl;
+    cout << "_bayer. height = " << _bayer.rows << "width = " << _bayer.cols << endl;
+    if (_rgb == NULL) {
         return;
     }
 
-    cout << "bayerPattern = " << bayerPattern << endl;
-    switch(bayerPattern) {
+    cout << "_bayerPattern = " << _bayerPattern << endl;
+    switch(_bayerPattern) {
         case bayer_buffer::BAYER_RGrGbB:
-            convertRGrGbB(padded, rgb, bayer.rows, bayer.cols, border);
+            convertRGrGbB(padded, _rgb, _bayer.rows, _bayer.cols, border, _max);
             break;
         case bayer_buffer::BAYER_GrRBGb:
-            convertGrRBGb(padded, rgb, bayer.rows, bayer.cols, border);
+            convertGrRBGb(padded, _rgb, _bayer.rows, _bayer.cols, border, _max);
             break;
         case bayer_buffer::BAYER_BGbGrR:
-            convertBGbGrR(padded, rgb, bayer.rows, bayer.cols, border);
+            convertBGbGrR(padded, _rgb, _bayer.rows, _bayer.cols, border, _max);
             break;
         case bayer_buffer::BAYER_GbBRGr:
-            convertGbBRGr(padded, rgb, bayer.rows, bayer.cols, border);
+            convertGbBRGr(padded, _rgb, _bayer.rows, _bayer.cols, border, _max);
             break;
         default:
-            cout <<"unsupport bayer pattern type:" << endl;
+            cout <<"unsupport _bayer pattern type:" << endl;
             break;
     }
 }
 
-void demosaicing::convertRGrGbB(const Mat1w& padded, Mat3w *rgb, int _height, int _width, int border) {
+void demosaicing::convertRGrGbB(const Mat1w& _padded, Mat3w *_rgb, int _height, int _width, int _border ,int _max) {
     cout << "height x width = " << _height << "x" << _width <<endl;
     typedef Point3_<ushort> Pixel;
     for (int h = 0; h < _height; ++h) {
-        Pixel* bgr = rgb->ptr<Pixel>(h);
+        Pixel* bgr = _rgb->ptr<Pixel>(h);
         //color b g r map to point x, y , z
         for (int w = 0; w < _width; w+=2) {
             if (h % 2 == 0) {
-                Mat1w bayerRMat(padded, Rect(w, h, 5, 5));
-                bgr[w].z = calcBayerWithPattern(bayerRMat, RR_PATTERN);
-                bgr[w].y = calcBayerWithPattern(bayerRMat, GR_PATTERN);
-                bgr[w].x = calcBayerWithPattern(bayerRMat, BR_PATTERN);
+                Mat1w _bayerRMat(_padded, Rect(w, h, 5, 5));
+                bgr[w].z = calcBayerWithPattern(_bayerRMat, RR_PATTERN, _max);
+                bgr[w].y = calcBayerWithPattern(_bayerRMat, GR_PATTERN, _max);
+                bgr[w].x = calcBayerWithPattern(_bayerRMat, BR_PATTERN, _max);
 
-                Mat1w bayerGrMat(padded, Rect((w+1), h, 5, 5));
-                bgr[w+1].z = calcBayerWithPattern(bayerGrMat, RGr_PATTERN);
-                bgr[w+1].y = calcBayerWithPattern(bayerGrMat, GGr_PATTERN);
-                bgr[w+1].x = calcBayerWithPattern(bayerGrMat, BGr_PATTERN);
+                Mat1w _bayerGrMat(_padded, Rect((w+1), h, 5, 5));
+                bgr[w+1].z = calcBayerWithPattern(_bayerGrMat, RGr_PATTERN, _max);
+                bgr[w+1].y = calcBayerWithPattern(_bayerGrMat, GGr_PATTERN, _max);
+                bgr[w+1].x = calcBayerWithPattern(_bayerGrMat, BGr_PATTERN, _max);
             } else {
-                Mat1w bayerGbMat(padded, Rect(w, h, 5, 5));
-                bgr[w].z = calcBayerWithPattern(bayerGbMat, RGb_PATTERN);
-                bgr[w].y = calcBayerWithPattern(bayerGbMat, GGb_PATTERN);
-                bgr[w].x = calcBayerWithPattern(bayerGbMat, BGb_PATTERN);
+                Mat1w _bayerGbMat(_padded, Rect(w, h, 5, 5));
+                bgr[w].z = calcBayerWithPattern(_bayerGbMat, RGb_PATTERN, _max);
+                bgr[w].y = calcBayerWithPattern(_bayerGbMat, GGb_PATTERN, _max);
+                bgr[w].x = calcBayerWithPattern(_bayerGbMat, BGb_PATTERN, _max);
 
-                Mat1w bayerBMat(padded, Rect((w+1), h, 5, 5));
-                bgr[w+1].z   = calcBayerWithPattern(bayerBMat, RB_PATTERN);
-                bgr[w+1].y   = calcBayerWithPattern(bayerBMat, GB_PATTERN);
-                bgr[w+1].x   = calcBayerWithPattern(bayerBMat, BB_PATTERN);
+                Mat1w _bayerBMat(_padded, Rect((w+1), h, 5, 5));
+                bgr[w+1].z   = calcBayerWithPattern(_bayerBMat, RB_PATTERN, _max);
+                bgr[w+1].y   = calcBayerWithPattern(_bayerBMat, GB_PATTERN, _max);
+                bgr[w+1].x   = calcBayerWithPattern(_bayerBMat, BB_PATTERN, _max);
             }
         }
     }
 }
 
-void demosaicing::convertGrRBGb(const Mat1w& padded, Mat3w *rgb, int _height, int _width, int border) {
+void demosaicing::convertGrRBGb(const Mat1w& _padded, Mat3w *_rgb, int _height, int _width, int _border, int _max) {
     cout << "height x width = " << _height << "x" << _width <<endl;
-    Mat3w bgr = *rgb;
+    Mat3w bgr = *_rgb;
     for (int h = 0; h < _height; ++h) {
         for (int w = 0; w < _width; w+=2) {
             if (h % 2 == 0) {
-                Mat1w bayerGrMat(padded, Rect(w, h, 5, 5));
-                bgr(h, w)[2] = calcBayerWithPattern(bayerGrMat, RGr_PATTERN);
-                bgr(h, w)[1] = calcBayerWithPattern(bayerGrMat, GGr_PATTERN);
-                bgr(h, w)[0] = calcBayerWithPattern(bayerGrMat, BGr_PATTERN);
+                Mat1w _bayerGrMat(_padded, Rect(w, h, 5, 5));
+                bgr(h, w)[2] = calcBayerWithPattern(_bayerGrMat, RGr_PATTERN, _max);
+                bgr(h, w)[1] = calcBayerWithPattern(_bayerGrMat, GGr_PATTERN, _max);
+                bgr(h, w)[0] = calcBayerWithPattern(_bayerGrMat, BGr_PATTERN, _max);
 
-                Mat1w bayerRMat(padded, Rect(w+1, h, 5, 5));
-                bgr(h, w+1)[2] = calcBayerWithPattern(bayerRMat, RR_PATTERN);
-                bgr(h, w+1)[1] = calcBayerWithPattern(bayerRMat, GR_PATTERN);
-                bgr(h, w+1)[0] = calcBayerWithPattern(bayerRMat, BR_PATTERN);
+                Mat1w _bayerRMat(_padded, Rect(w+1, h, 5, 5));
+                bgr(h, w+1)[2] = calcBayerWithPattern(_bayerRMat, RR_PATTERN, _max);
+                bgr(h, w+1)[1] = calcBayerWithPattern(_bayerRMat, GR_PATTERN, _max);
+                bgr(h, w+1)[0] = calcBayerWithPattern(_bayerRMat, BR_PATTERN, _max);
 
             } else {
-                Mat1w bayerBMat(padded, Rect(w, h, 5, 5));
-                bgr(h, w)[2]  = calcBayerWithPattern(bayerBMat, RB_PATTERN);
-                bgr(h, w)[1]  = calcBayerWithPattern(bayerBMat, GB_PATTERN);
-                bgr(h, w)[0]  = calcBayerWithPattern(bayerBMat, BB_PATTERN);
+                Mat1w _bayerBMat(_padded, Rect(w, h, 5, 5));
+                bgr(h, w)[2]  = calcBayerWithPattern(_bayerBMat, RB_PATTERN, _max);
+                bgr(h, w)[1]  = calcBayerWithPattern(_bayerBMat, GB_PATTERN, _max);
+                bgr(h, w)[0]  = calcBayerWithPattern(_bayerBMat, BB_PATTERN, _max);
 
-                Mat1w bayerGbMat(padded, Rect(w+1, h, 5, 5));
-                bgr(h, w+1)[2] = calcBayerWithPattern(bayerGbMat, RGb_PATTERN);
-                bgr(h, w+1)[1] = calcBayerWithPattern(bayerGbMat, GGb_PATTERN);
-                bgr(h, w+1)[0] = calcBayerWithPattern(bayerGbMat, BGb_PATTERN);
+                Mat1w _bayerGbMat(_padded, Rect(w+1, h, 5, 5));
+                bgr(h, w+1)[2] = calcBayerWithPattern(_bayerGbMat, RGb_PATTERN, _max);
+                bgr(h, w+1)[1] = calcBayerWithPattern(_bayerGbMat, GGb_PATTERN, _max);
+                bgr(h, w+1)[0] = calcBayerWithPattern(_bayerGbMat, BGb_PATTERN, _max);
             }
         }
     }
 }
 
-void demosaicing::convertBGbGrR(const Mat1w& padded, Mat3w *rgb, int _height, int _width, int border) {
+void demosaicing::convertBGbGrR(const Mat1w& _padded, Mat3w *_rgb, int _height, int _width, int _border, int _max) {
     cout << "height x width = " << _height << "x" << _width <<endl;
     typedef Point3_<ushort> Pixel;
     for (int h = 0; h < _height; ++h) {
-        Pixel* bgr = rgb->ptr<Pixel>(h);
+        Pixel* bgr = _rgb->ptr<Pixel>(h);
         //color b g r map to point x, y , z
         for (int w = 0; w < _width; w+=2) {
             if (h % 2 == 1) {
-                Mat1w bayerGrMat(padded, Rect(w, h, 5, 5));
-                bgr[w].z = calcBayerWithPattern(bayerGrMat, RGr_PATTERN);
-                bgr[w].y = calcBayerWithPattern(bayerGrMat, GGr_PATTERN);
-                bgr[w].x = calcBayerWithPattern(bayerGrMat, BGr_PATTERN);
+                Mat1w _bayerGrMat(_padded, Rect(w, h, 5, 5));
+                bgr[w].z = calcBayerWithPattern(_bayerGrMat, RGr_PATTERN, _max);
+                bgr[w].y = calcBayerWithPattern(_bayerGrMat, GGr_PATTERN, _max);
+                bgr[w].x = calcBayerWithPattern(_bayerGrMat, BGr_PATTERN, _max);
 
-                Mat1w bayerRMat(padded, Rect(w+1, h, 5, 5));
-                bgr[w+1].z = calcBayerWithPattern(bayerRMat, RR_PATTERN);
-                bgr[w+1].y = calcBayerWithPattern(bayerRMat, GR_PATTERN);
-                bgr[w+1].x = calcBayerWithPattern(bayerRMat, BR_PATTERN);
+                Mat1w _bayerRMat(_padded, Rect(w+1, h, 5, 5));
+                bgr[w+1].z = calcBayerWithPattern(_bayerRMat, RR_PATTERN, _max);
+                bgr[w+1].y = calcBayerWithPattern(_bayerRMat, GR_PATTERN, _max);
+                bgr[w+1].x = calcBayerWithPattern(_bayerRMat, BR_PATTERN, _max);
 
             } else {
-                Mat1w bayerBMat(padded, Rect(w, h, 5, 5));
-                bgr[w].z   = calcBayerWithPattern(bayerBMat, RB_PATTERN);
-                bgr[w].y   = calcBayerWithPattern(bayerBMat, GB_PATTERN);
-                bgr[w].x   = calcBayerWithPattern(bayerBMat, BB_PATTERN);
+                Mat1w _bayerBMat(_padded, Rect(w, h, 5, 5));
+                bgr[w].z   = calcBayerWithPattern(_bayerBMat, RB_PATTERN, _max);
+                bgr[w].y   = calcBayerWithPattern(_bayerBMat, GB_PATTERN, _max);
+                bgr[w].x   = calcBayerWithPattern(_bayerBMat, BB_PATTERN, _max);
 
-                Mat1w bayerGbMat(padded, Rect(w+1, h, 5, 5));
-                bgr[w+1].z = calcBayerWithPattern(bayerGbMat, RGb_PATTERN);
-                bgr[w+1].y = calcBayerWithPattern(bayerGbMat, GGb_PATTERN);
-                bgr[w+1].x = calcBayerWithPattern(bayerGbMat, BGb_PATTERN);
+                Mat1w _bayerGbMat(_padded, Rect(w+1, h, 5, 5));
+                bgr[w+1].z = calcBayerWithPattern(_bayerGbMat, RGb_PATTERN, _max);
+                bgr[w+1].y = calcBayerWithPattern(_bayerGbMat, GGb_PATTERN, _max);
+                bgr[w+1].x = calcBayerWithPattern(_bayerGbMat, BGb_PATTERN, _max);
             }
         }
     }
 }
 
-void demosaicing::convertGbBRGr(const Mat1w& padded, Mat3w *rgb, int _height, int _width, int border) {
+void demosaicing::convertGbBRGr(const Mat1w& _padded, Mat3w *_rgb, int _height, int _width, int _border, int _max) {
     cout << "height x width = " << _height << "x" << _width <<endl;
     typedef Point3_<ushort> Pixel;
     for (int h = 0; h < _height; ++h) {
-        Pixel* bgr = rgb->ptr<Pixel>(h);
+        Pixel* bgr = _rgb->ptr<Pixel>(h);
         //color b g r map to point x, y , z
         for (int w = 0; w < _width; w+=2) {
             if (h % 2 == 1) {
-                Mat1w bayerRMat(padded, Rect(w, h, 5, 5));
-                bgr[w].z = calcBayerWithPattern(bayerRMat, RR_PATTERN);
-                bgr[w].y = calcBayerWithPattern(bayerRMat, GR_PATTERN);
-                bgr[w].x = calcBayerWithPattern(bayerRMat, BR_PATTERN);
+                Mat1w _bayerRMat(_padded, Rect(w, h, 5, 5));
+                bgr[w].z = calcBayerWithPattern(_bayerRMat, RR_PATTERN, _max);
+                bgr[w].y = calcBayerWithPattern(_bayerRMat, GR_PATTERN, _max);
+                bgr[w].x = calcBayerWithPattern(_bayerRMat, BR_PATTERN, _max);
 
-                Mat1w bayerGrMat(padded, Rect((w+1), h, 5, 5));
-                bgr[w+1].z = calcBayerWithPattern(bayerGrMat, RGr_PATTERN);
-                bgr[w+1].y = calcBayerWithPattern(bayerGrMat, GGr_PATTERN);
-                bgr[w+1].x = calcBayerWithPattern(bayerGrMat, BGr_PATTERN);
+                Mat1w _bayerGrMat(_padded, Rect((w+1), h, 5, 5));
+                bgr[w+1].z = calcBayerWithPattern(_bayerGrMat, RGr_PATTERN, _max);
+                bgr[w+1].y = calcBayerWithPattern(_bayerGrMat, GGr_PATTERN, _max);
+                bgr[w+1].x = calcBayerWithPattern(_bayerGrMat, BGr_PATTERN, _max);
             } else {
-                Mat1w bayerGbMat(padded, Rect(w, h, 5, 5));
-                bgr[w].z = calcBayerWithPattern(bayerGbMat, RGb_PATTERN);
-                bgr[w].y = calcBayerWithPattern(bayerGbMat, GGb_PATTERN);
-                bgr[w].x = calcBayerWithPattern(bayerGbMat, BGb_PATTERN);
+                Mat1w _bayerGbMat(_padded, Rect(w, h, 5, 5));
+                bgr[w].z = calcBayerWithPattern(_bayerGbMat, RGb_PATTERN, _max);
+                bgr[w].y = calcBayerWithPattern(_bayerGbMat, GGb_PATTERN, _max);
+                bgr[w].x = calcBayerWithPattern(_bayerGbMat, BGb_PATTERN, _max);
 
-                Mat1w bayerBMat(padded, Rect((w+1), h, 5, 5));
-                bgr[w+1].z   = calcBayerWithPattern(bayerBMat, RB_PATTERN);
-                bgr[w+1].y   = calcBayerWithPattern(bayerBMat, GB_PATTERN);
-                bgr[w+1].x   = calcBayerWithPattern(bayerBMat, BB_PATTERN);
+                Mat1w _bayerBMat(_padded, Rect((w+1), h, 5, 5));
+                bgr[w+1].z   = calcBayerWithPattern(_bayerBMat, RB_PATTERN, _max);
+                bgr[w+1].y   = calcBayerWithPattern(_bayerBMat, GB_PATTERN, _max);
+                bgr[w+1].x   = calcBayerWithPattern(_bayerBMat, BB_PATTERN, _max);
             }
         }
     }
 }
 
-ushort demosaicing::calcBayerWithPattern(const Mat1w& bayer, int pattern) {
+ushort demosaicing::calcBayerWithPattern(const Mat1w& _bayer, int _pattern, int _max) {
     int result = 0;
     int *patternStart = sDemosaicingPattern;
-    patternStart += pattern * 25;
+    patternStart += _pattern * 25;
     for (int i = 0; i < 5; ++i) {
         for (int j = 0; j < 5; ++j) {
             if (patternStart[5*i +j] != 0) {
-                result += (int)(bayer(i,j)) * patternStart[5*i + j];
+                result += (int)(_bayer(i,j)) * patternStart[5*i + j];
             }
         }
     }
-    result = result * sDemosaicingCofficient[pattern];
-    result = result < 0 ? 0 : (result > 0xFFFF ? 0xFFFF : result);
+    result = result * sDemosaicingCofficient[_pattern];
+    result = result < 0 ? 0 : (result > _max ? _max : result);
     return (ushort) result;
 }

@@ -16,7 +16,7 @@ class gamma_correction {
             return gamma;
         }
 
-        void applyGamma(Mat3w& _rgb, int _indoorOutdoorWeight = 128, int _intensityMax = 0xFFFF +1);
+        void applyGamma(Mat3w& _rgb, int _indoorOutdoorWeight = 128, int _intensityMax = 0xFFFF);
 
         void setGammaMaxIntensity(int _max);
     private:
@@ -27,5 +27,7 @@ class gamma_correction {
         U32 gammaOutdoor[GAMMA_TABLE_COUNT];
         void initGamma(U32 *_table, float _gamma, int _baseOffset, int _endOffset, int _linearity);
         float getGammaResult(U32 *_table, int _x, bool _isFirst);
+
+        float getSamLut(ushort value, int _intensityMax);
 };
 #endif// __GAMMA_CORRECTION_H

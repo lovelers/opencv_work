@@ -11,9 +11,10 @@ using namespace std;
 #define RAW_HEIGHT_DEFAULT 3984
 #define RAW_BITDEPTHS_DEFAULT 12
 #define RAW_FILE_NAME_DEFAULT "./res/raw.buffer"
+#define RAW_SAM_BAYER_EXAMPLE "./res/sam.buffer"
 
 #define USE_OPENCV_TEST false
-#define PROCESSING_BAYER_16 true
+#define PROCESSING_BAYER_16 false
 #define PROCESSING_BAYER_8 true
 #define PROCESSING BAYER_14 true
 //#define RAW_FILE_NAME "./res/RawCapture0_20160526_163445.raw"
@@ -34,6 +35,12 @@ int main(int argc, char**argv) {
     const Mat & bayerMat = raw.getBayerMat();
     cout <<"finish the raw parser" << endl;
 
+    if (argc > 2) {
+        cout << "start make sam bayer example" << endl;
+        raw.makeSamBayer(height, width, argv[2]);
+        return 0;
+    }
+
 #if PROCESSING_BAYER_8
     Mat1w bayer8(height, width);
     for (int row = 0; row < bayerMat.rows; ++row) {
@@ -49,16 +56,15 @@ int main(int argc, char**argv) {
     raw.deNoiseBayerDomain(bayer8, bayer_noise_reduction::AVERAGE_DENOISE, pattern);
 
     Mat3w rgb8(height, width);
-    raw.demosaicing(bayer8, &rgb8, pattern);
+    raw.demosaicing(bayer8, &rgb8, pattern, 0xFF);
+#if 1
+    raw.applyGamma(rgb8, 128, 0xFF);
     raw.applyCcm(rgb8, 255);
-#if 0
-    raw.applyGamma(rgb8, 128, 0xFF + 1);
-
+#endif
     Mat3w yuv8(height, width);
     raw.rgb2yuv(rgb8, yuv8);
-    raw.histEqualization(yuv8, 0xFF);
+    //raw.histEqualization(yuv8, 0xFF);
     raw.yuv2rgb(yuv8, rgb8);
-#endif
     Mat3b rgb8b(height, width);
     for (int row = 0; row < rgb8.rows; ++row) {
         for (int col = 0; col < rgb8.cols; ++col) {

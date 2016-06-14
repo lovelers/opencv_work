@@ -25,13 +25,14 @@ class raw_processing {
         const Mat& getBayerMat();
         void deNoiseBayerDomain(Mat1w & _bayer, int _denoiseType, int _bayerPattern);
         void applyWBGains(Mat1w& _bayer, int _rGains, int _gGains, int _bGains, int _pattern);
-        void demosaicing(const Mat1w& _bayer, Mat3w *_rgb, int _bayerPattern);
+        void demosaicing(const Mat1w& _bayer, Mat3w *_rgb, int _bayerPattern, int _max);
 
         void applyCcm(Mat3w &_rgb, ushort _max);
         void applyGamma(Mat3w &_rgb, int _indoorOutdoor, int _intensityMax);
         void histEqualization(Mat3w & _rgb, int _maxValue);
         void rgb2yuv(const Mat3w & _rgb, Mat3w & _yuv);
         void yuv2rgb(const Mat3w & _yuv, Mat3w & _rgb);
+        void makeSamBayer(int _height, int _width, const char *_file);
         ~raw_processing();
 
     private:

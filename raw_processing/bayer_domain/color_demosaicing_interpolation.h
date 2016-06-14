@@ -47,12 +47,12 @@ class demosaicing {
 
         static int sDemosaicingPattern[];
 
-        static void convert(const Mat1w& bayer, Mat3w *rgb, int bayerPattern);
-        static void convertRGrGbB(const Mat1w& padded, Mat3w *rgb, int _height, int _width, int border);
-        static void convertGrRBGb(const Mat1w& padded, Mat3w *rgb, int _height, int _width, int border);
-        static void convertBGbGrR(const Mat1w& padded, Mat3w *rgb, int _height, int _width, int border);
-        static void convertGbBRGr(const Mat1w& padded, Mat3w *rgb, int _height, int _width, int border);
-        static ushort calcBayerWithPattern(const Mat1w& bayerMat1w, int pattern);
+        static void convert(const Mat1w& _bayer, Mat3w *_rgb, int _bayerPattern, int _max);
+        static void convertRGrGbB(const Mat1w& _padded, Mat3w *_rgb, int _height, int _width, int _border, int _max);
+        static void convertGrRBGb(const Mat1w& _padded, Mat3w *_rgb, int _height, int _width, int _border, int _max);
+        static void convertBGbGrR(const Mat1w& _padded, Mat3w *_rgb, int _height, int _width, int _border, int _max);
+        static void convertGbBRGr(const Mat1w& _padded, Mat3w *_rgb, int _height, int _width, int _border, int _max);
+        static ushort calcBayerWithPattern(const Mat1w& _bayer, int _pattern, int _max);
 
     private:
         demosaicing();

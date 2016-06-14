@@ -24,8 +24,9 @@ class bayer_buffer {
         bool init(const char *_file, int _height, int _width, int _bitdepths);
         void uninit();
         void setPattern(Bayer_Pattern_Type _pattern);
-        inline Bayer_Pattern_Type getPattern() const { return pattern;};
-        inline const Mat& getMat() const { return bayer;};
+        inline Bayer_Pattern_Type getPattern() const { return pattern;}
+        inline const Mat& getMat() const { return bayer;}
+        void makeSamBayer(int _height, int _width, const char *_file);
     private:
         Mat bayer;
         int width;

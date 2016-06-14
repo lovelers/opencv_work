@@ -77,3 +77,17 @@ void bayer_buffer::fastParserBayer12(uchar *_bayerBuffer, Mat _bayer) {
         ++pixel;
     }
 }
+
+void bayer_buffer::makeSamBayer(int _height, int _width, const char *_file) {
+    //_bayer.create(_height, _width, CV_16UC1);
+    two_pixel pixel;
+    FILE *fp = fopen(_file, "wb+");
+    for (int row = 0; row < _height;  ++row) {
+        unsigned int value = static_cast<unsigned int> (row / 128 * 128);
+        for (int col = 0; col < _width; col+=2) {
+            pixel.a = pixel.b = value;
+            fwrite(&pixel, 1, sizeof (two_pixel), fp);
+        }
+    }
+    fclose(fp);
+}
