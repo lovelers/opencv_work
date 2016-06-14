@@ -1,11 +1,13 @@
 #include <iostream>
 #include "raw_processing.h"
+#include "willis_timer.h"
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/utility.hpp>
 #include "opencv2/photo.hpp"
 
 using namespace std;
+using namespace willis;
 
 #define RAW_WIDTH_DEFAULT 5312
 #define RAW_HEIGHT_DEFAULT 3984
@@ -19,6 +21,7 @@ using namespace std;
 #define PROCESSING BAYER_14 true
 //#define RAW_FILE_NAME "./res/RawCapture0_20160526_163445.raw"
 int main(int argc, char**argv) {
+    AutoTimer gTimer("main");
     int height = RAW_HEIGHT_DEFAULT;
     int width = RAW_WIDTH_DEFAULT;
     const char *file = (argc > 1) ? argv[1] : RAW_FILE_NAME_DEFAULT;
@@ -53,10 +56,16 @@ int main(int argc, char**argv) {
     fwrite(bayer8.data, 1, height * width * sizeof(uchar), fp8);
     fclose(fp8);
 
-    raw.deNoiseBayerDomain(bayer8, bayer_noise_reduction::AVERAGE_DENOISE, pattern);
+    {
+        AutoTimer timer("deNoiseByaerDomain");
+        raw.deNoiseBayerDomain(bayer8, bayer_noise_reduction::AVERAGE_DENOISE, pattern);
+    }
 
     Mat3w rgb8(height, width);
-    raw.demosaicing(bayer8, &rgb8, pattern, 0xFF);
+    {
+        AutoTimer timer("demosaicing");
+        raw.demosaicing(bayer8, &rgb8, pattern, 0xFF);
+    }
 #if 1
     raw.applyGamma(rgb8, 128, 0xFF);
     raw.applyCcm(rgb8, 255);

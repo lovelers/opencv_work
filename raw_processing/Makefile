@@ -6,7 +6,8 @@ OPENCV_FLAGS_LINK = $(shell pkg-config opencv --libs --cflags opencv)
 
 PROJECT_NAME = img_processing
 
-CFLAGS := -fpermissive
+CFLAGS += -fpermissive
+CFLAGS += -DOPENCV
 
 all: $(PROJECT_NAME)
 

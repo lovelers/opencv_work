@@ -115,7 +115,6 @@ void gamma_correction::applyGamma(Mat3w& _rgb, int _indoorOutdoorWeight, int _in
     int base = GAMMA_MAX_VALUE / (_intensityMax + 1);
 
     float b, g ,r;
-    cout << " goto here" << endl;
     for (int row = 0; row < _rgb.rows; ++row) {
         for (int col = 0; col < _rgb.cols; ++col) {
             if (_intensityMax == 0xFF) {
@@ -132,7 +131,6 @@ void gamma_correction::applyGamma(Mat3w& _rgb, int _indoorOutdoorWeight, int _in
             _rgb(row, col)[2] = (ushort)(localGammaResult[static_cast<int>(r * base + 0.5f)] / base + 0.5f);
         }
     }
-    cout << " goto here" << endl;
 }
 
 float gamma_correction::getSamLut(ushort value, int _intensityMax) {
