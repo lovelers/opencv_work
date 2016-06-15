@@ -35,8 +35,8 @@ void raw_processing::applyWBGains(Mat1w &bayer, int rGains, int gGains, int bGai
     //white_balance::applyWBGains(bayer, rGains, gGains, bGains, pattern);
 }
 
-void raw_processing::deNoiseBayerDomain(Mat1w& _bayer, int _denoiseType, int _bayerPattern) {
-    bayer_noise_reduction::deNoise(_bayer, _denoiseType, _bayerPattern);
+void raw_processing::deNoiseBayerDomain(const Mat1w& _bayer, Mat1w _dst, int _denoiseType, int _bayerPattern) {
+    bayer_noise_reduction::deNoise(_bayer, _dst, _denoiseType, _bayerPattern);
 }
 
 void raw_processing::applyCcm(Mat3w &_rgb, ushort _max) {

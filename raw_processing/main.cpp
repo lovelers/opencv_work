@@ -56,15 +56,17 @@ int main(int argc, char**argv) {
     fwrite(bayer8.data, 1, height * width * sizeof(uchar), fp8);
     fclose(fp8);
 
+    Mat1w denoised(height, width);
     {
         AutoTimer timer("deNoiseByaerDomain");
-        raw.deNoiseBayerDomain(bayer8, bayer_noise_reduction::AVERAGE_DENOISE, pattern);
+        raw.deNoiseBayerDomain(bayer8, denoised, bayer_noise_reduction::MEDIUM_DENOISE, pattern);
+        //raw.deNoiseBayerDomain(bayer8, denoised, bayer_noise_reduction::AVERAGE_DENOISE, pattern);
     }
 
     Mat3w rgb8(height, width);
     {
         AutoTimer timer("demosaicing");
-        raw.demosaicing(bayer8, &rgb8, pattern, 0xFF);
+        raw.demosaicing(denoised, &rgb8, pattern, 0xFF);
     }
 #if 1
     raw.applyGamma(rgb8, 128, 0xFF);

@@ -117,7 +117,6 @@ int demosaicing::sDemosaicingPattern[] = {
     0, 0, -1, 0, 0,
 };
 #else
-
 float demosaicing::sDemosaicingCofficient[RGB_PATTERN_MAX] = {
     1/5.f, 1/4.f, 1/4.f,
     1/2.f, 1/5.f, 1/2.f,
@@ -229,6 +228,7 @@ int demosaicing::sDemosaicingPattern[] = {
 #endif
 
 void demosaicing::convert(const Mat1w& _bayer, Mat3w *_rgb, int _bayerPattern, int _max) {
+
     int border = 2;
     Mat1w padded;
     copyMakeBorder(_bayer, padded, border, border, border, border, BORDER_REFLECT_101);
@@ -292,6 +292,33 @@ void demosaicing::convertRGrGbB(const Mat1w& _padded, Mat3w *_rgb, int _height, 
 
 void demosaicing::convertGrRBGb(const Mat1w& _padded, Mat3w *_rgb, int _height, int _width, int _border, int _max) {
     cout << "height x width = " << _height << "x" << _width <<endl;
+#if 1
+    // 3x3 table average.
+    // Bilinear Interpolation
+    Mat3w bgr = *_rgb;
+    for (int row = 0; row < _height; row+=2) {
+        for (int col = 0; col < _width; col+=2) {
+            int row1 = row + _border;
+            int col1 = col + _border;
+            bgr(row, col)[2] = (_padded(row1, col1-1) + _padded(row1, col1+1)) / 2;
+            bgr(row, col)[1] = _padded(row1, col1);
+            bgr(row, col)[0] = (_padded(row1-1, col1) + _padded(row1+1,col1)) / 2;
+
+            bgr(row, col+1)[2] = _padded(row1, col1+1);
+            bgr(row, col+1)[1] = (_padded(row1, col1) + _padded(row1, col1+2)) / 2;
+            bgr(row, col+1)[0] = (_padded(row1-1, col1-1) + _padded(row1-1, col1+1) + _padded(row1+1, col1-1) + _padded(row1+1, col1+1)) / 4;
+
+            bgr(row+1, col)[2] = (_padded(row1, col1-1) + _padded(row1, col1+1) + _padded(row1+2, col1-1) + _padded(row1+2, col1+1)) / 4;
+            bgr(row+1, col)[1] = (_padded(row1, col1) + _padded(row1+1, col1-1) + _padded(row1+1, col1+1) + _padded(row1+2, col1)) / 4;
+            bgr(row+1, col)[0] = _padded(row1+1, col1);
+
+            bgr(row+1, col+1)[2] = (_padded(row1, col1+1) + _padded(row1+2, col1+1)) / 2;
+            bgr(row+1, col+1)[1] = _padded(row1+1, col1+1);
+            bgr(row+1, col+1)[0] = (_padded(row1+1, col1) + _padded(row1+1, col1+2)) / 2;
+        }
+    }
+#else
+    // 5x5 talble
     Mat3w bgr = *_rgb;
     for (int h = 0; h < _height; ++h) {
         for (int w = 0; w < _width; w+=2) {
@@ -319,6 +346,7 @@ void demosaicing::convertGrRBGb(const Mat1w& _padded, Mat3w *_rgb, int _height, 
             }
         }
     }
+#endif
 }
 
 void demosaicing::convertBGbGrR(const Mat1w& _padded, Mat3w *_rgb, int _height, int _width, int _border, int _max) {

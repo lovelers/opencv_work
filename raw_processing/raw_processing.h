@@ -23,7 +23,7 @@ class raw_processing {
         }
         bool selectRawFile(const char *_file, int _height, int _width, int _bitdepths);
         const Mat& getBayerMat();
-        void deNoiseBayerDomain(Mat1w & _bayer, int _denoiseType, int _bayerPattern);
+        void deNoiseBayerDomain(const Mat1w & _bayer, Mat1w _dst, int _denoiseType, int _bayerPattern);
         void applyWBGains(Mat1w& _bayer, int _rGains, int _gGains, int _bGains, int _pattern);
         void demosaicing(const Mat1w& _bayer, Mat3w *_rgb, int _bayerPattern, int _max);
 

@@ -9,10 +9,13 @@ class bayer_noise_reduction {
             AVERAGE_DENOISE = 0,
             MEDIUM_DENOISE,
         };
-        static void deNoise(Mat1w& _bayer, int _denoiseType, int _bayerPattern);
+        static void deNoise(const Mat1w& _bayer,  Mat1w & _dst, int _denoiseType, int _bayerPattern);
     private:
-        static void averageDeNoise(Mat1w& _bayer, int _bayerPattern);
-        static void mediumDeNoise(Mat1w& _bayer, int _bayerPattern);
+        static void averageDeNoise(const Mat1w & _bayer, Mat1w & _dst, int _bayerPattern, int _border);
+        static void mediumDeNoise(const Mat1w & _bayer, Mat1w & _dst, int _bayerPattern, int _border);
+
+        static void quickSelection(ushort* _array, int _start, int _end, int element, int *value);
+        static int quickPartition(ushort *_array, int _start, int _end, int povit);
         bayer_noise_reduction();
 };
 #endif // __BAYER_NOISE_REDUCTION_H
