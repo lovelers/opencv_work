@@ -25,10 +25,10 @@ extern "C" {
 typedef struct __ae_metering_config {
     U32 centerWidth;
     U32 centerHeight;
-    const U8 centerMap[1024];
+    U8 centerMap[1024];
     U32 spotWidth;
     U32 spotHeight;
-    const U8 spotMap[84];
+    U8 spotMap[81];
 } __attribute__((__packed__)) ae_metering_config;
 
 
