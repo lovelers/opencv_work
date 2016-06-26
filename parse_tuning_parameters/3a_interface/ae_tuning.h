@@ -100,25 +100,25 @@ typedef struct __ae_convergent_table {
     U32 targetBr;
 
     U32 tableCount1;
-    const ae_table table1[24];
+    ae_table table1[24];
 
     U32 tableCount2;
-    const ae_table table2[108];
+    ae_table table2[108];
 
     U32 flickerAutoCount1;
-    const float flickerAuto1[24];
+    float flickerAuto1[24];
     U32 flickerAutoCount2;
-    const float flickerAuto2[24];
+    float flickerAuto2[24];
 
     U32 flicker50HzTableCount1;
-    const float flicker50Hz1[24];
+    float flicker50Hz1[24];
     U32 flicker50HzTableCount2;
-    const float flicker50Hz2[24];
+    float flicker50Hz2[24];
 
     U32 flicker60HzTableCount1;
-    const float flicker60Hz1[30];
+    float flicker60Hz1[30];
     U32 flicker60HzTableCount2;
-    const float flicker60Hz2[30];
+    float flicker60Hz2[30];
 } __attribute__((__packed__)) ae_convergent_table;
 
 typedef struct __ae_bv_range {

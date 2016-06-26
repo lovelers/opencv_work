@@ -396,29 +396,29 @@ int parse_ae_tuning_parameters(json_value *value, ae_tuning_parameters *ae) {
 
         json_value *tableCount1 = get_object("tableCount1", convergent_table);
         if (tableCount1 && tableCount1->type == json_integer) {
-            ae->convergent_table.tableCount1 = (U32) convergent_table1->u.integer;
+            ae->convergent_table.tableCount1 = (U32) tableCount1->u.integer;
         }
 
         json_value *table1 = get_object("table1", convergent_table);
         if (table1 && table1->type == json_array) {
-            size = ae->convergent_table.tableCount1 * 2;
-            for (i = 0; i < size; i+= 2) {
-                ae->convergent_table.table1[i] = (U32) table1->u.array.values[i]->u.integer;
-                ae->convergent_table.table1[i+1] = (float) table1->u.array.values[i]->u.dbl;
+            size = ae->convergent_table.tableCount1;
+            for (i = 0; i < size; i++) {
+                ae->convergent_table.table1[i].luminance = (U32) table1->u.array.values[2*i]->u.integer;
+                ae->convergent_table.table1[i].convergent_ratio = (float) table1->u.array.values[2*i+1]->u.dbl;
             }
         }
 
         json_value *tableCount2 = get_object("tableCount2", convergent_table);
         if (tableCount2 && tableCount2->type == json_integer) {
-            ae->convergent_table.tableCount2 = (U32) convergent_table2->u.integer;
+            ae->convergent_table.tableCount2 = (U32) tableCount2->u.integer;
         }
         
         json_value *table2 = get_object("table2", convergent_table);
         if (table2 && table2->type == json_array) {
-            size = ae->convergent_table.tableCount2 * 2;
-            for (i = 0; i < size; i+= 2) {
-                ae->convergent_table.table2[i] = (U32) table2->u.array.values[i]->u.integer;
-                ae->convergent_table.table2[i+1] = (float) table2->u.array.values[i]->u.dbl;
+            size = ae->convergent_table.tableCount2;
+            for (i = 0; i < size; i++) {
+                ae->convergent_table.table2[i].luminance = (U32) table2->u.array.values[2*i]->u.integer;
+                ae->convergent_table.table2[i].convergent_ratio = (float) table2->u.array.values[2*i+1]->u.dbl;
             }
         }
 
@@ -491,7 +491,7 @@ int parse_ae_tuning_parameters(json_value *value, ae_tuning_parameters *ae) {
     // dynamic_compensation
     {
         json_value *dynamic_compensation = get_object("dynamic_compensation", value);
-        if (dynamic_compensation & dynamic_compensation->type == json_object) {
+        if (dynamic_compensation && dynamic_compensation->type == json_object) {
             json_value * dynamic_ae_enabled = get_object("dynamic_ae_enabled", dynamic_compensation);
             if (dynamic_ae_enabled && dynamic_ae_enabled->type == json_integer) {
                 ae->dynamic_compensation.dynamic_ae_enabled = (int) dynamic_ae_enabled->u.integer;
@@ -529,7 +529,163 @@ void parse_ae_tuning_parameters_bv_range(json_value *value, ae_bv_range * range)
 }
 
 int parse_gamma_tuning_parameters(json_value *value, gamma_tuning_parameters *gamma) {
+    print_json_value(value, 0);
+    int i, size;
+
+    json_value *base_config = get_object("base_config", value);
+    if (base_config && base_config->type == json_object) {
+        json_value *normalGamma = get_object("normalGamma", base_config);
+        if (normalGamma && normalGamma->type == json_double) {
+            gamma->base_config.normalGamma = (float) normalGamma->u.dbl;
+        }
+        json_value *normalBaseOffset = get_object("normalBaseOffset", base_config);
+        if (normalBaseOffset && normalBaseOffset->type == json_integer) {
+            gamma->base_config.normalBaseOffset = (int) normalBaseOffset->u.dbl;
+        }
+        json_value *normalEndOffset = get_object("normalEndOffset", base_config);
+        if (normalEndOffset && normalEndOffset->type == json_double) {
+            gamma->base_config.normalEndOffset = (int) normalEndOffset->u.dbl;
+        }
+        json_value *normalLinearityWeight = get_object("normalLinearityWeight", base_config);
+        if (normalLinearityWeight && normalLinearityWeight->type == json_double) {
+            gamma->base_config.normalLinearityWeight = (U32) normalLinearityWeight->u.dbl;
+        }
+
+        json_value *indoorGamma = get_object("indoorGamma", base_config);
+        if (indoorGamma && indoorGamma->type == json_double) {
+            gamma->base_config.indoorGamma = (float) indoorGamma->u.dbl;
+        }
+        json_value *indoorBaseOffset = get_object("indoorBaseOffset", base_config);
+        if (indoorBaseOffset && indoorBaseOffset->type == json_integer) {
+            gamma->base_config.indoorBaseOffset = (int) indoorBaseOffset->u.dbl;
+        }
+        json_value *indoorEndOffset = get_object("indoorEndOffset", base_config);
+        if (indoorEndOffset && indoorEndOffset->type == json_double) {
+            gamma->base_config.indoorEndOffset = (int) indoorEndOffset->u.dbl;
+        }
+        json_value *indoorLinearityWeight = get_object("indoorLinearityWeight", base_config);
+        if (indoorLinearityWeight && indoorLinearityWeight->type == json_double) {
+            gamma->base_config.indoorLinearityWeight = (U32) indoorLinearityWeight->u.dbl;
+        }
+
+
+        json_value *outdoorGamma = get_object("outdoorGamma", base_config);
+        if (outdoorGamma && outdoorGamma->type == json_double) {
+            gamma->base_config.outdoorGamma = (float) outdoorGamma->u.dbl;
+        }
+        json_value *outdoorBaseOffset = get_object("outdoorBaseOffset", base_config);
+        if (outdoorBaseOffset && outdoorBaseOffset->type == json_integer) {
+            gamma->base_config.outdoorBaseOffset = (int) outdoorBaseOffset->u.dbl;
+        }
+        json_value *outdoorEndOffset = get_object("outdoorEndOffset", base_config);
+        if (outdoorEndOffset && outdoorEndOffset->type == json_double) {
+            gamma->base_config.outdoorEndOffset = (int) outdoorEndOffset->u.dbl;
+        }
+        json_value *outdoorLinearityWeight = get_object("outdoorLinearityWeight", base_config);
+        if (outdoorLinearityWeight && outdoorLinearityWeight->type == json_double) {
+            gamma->base_config.outdoorLinearityWeight = (U32) outdoorLinearityWeight->u.dbl;
+        }
+
+        json_value *gamma_table_x = get_object("gamma_table_x", base_config);
+        if (gamma_table_x && gamma_table_x->type == json_array) {
+            size = gamma_table_x->u.array.length;
+            if (size != 32) {
+                printf("base gamma table size: %d\n", size);
+                size = (size > 32) ? 32 : size;
+            }
+            for (i = 0; i < size; ++i) {
+                gamma->base_config.gamma_table_x[i] = (U32) gamma_table_x->u.array.values[i]->u.integer;
+            }
+        }
+
+        json_value *user_gamma = get_object("user_gamma", base_config);
+        if (user_gamma && user_gamma->type == json_array) {
+            size = user_gamma->u.array.length;
+            if (size != 32) {
+                printf("base gamma table size: %d\n", size);
+                size = (size > 32) ? 32 : size;
+            }
+            for (i = 0; i < size; ++i) {
+                gamma->base_config.user_gamma[i] = (float) user_gamma->u.array.values[i]->u.dbl;
+            }
+        }
+    }
+
+    json_value *compensation = get_object("compensation", value);
+    if (compensation && compensation->type == json_object) {
+        json_value *drcEnabled = get_object("drcEnabled", compensation);
+        if (drcEnabled && drcEnabled->type == json_integer) {
+            gamma->compensation.drcEnabled = (int) drcEnabled->u.integer;
+        }
+
+        json_value *drcStrength = get_object("drcStrength", compensation);
+        if (drcStrength && drcStrength->type == json_double) {
+            gamma->compensation.drcStrength = (float) drcStrength->u.dbl;
+        }
+    }
+
+    json_value *filter_table = get_object("filter_table", value);
+
+    if (filter_table && filter_table->type == json_object) {
+        // blackWhite
+        json_value * blackWhite = get_object("blackWhite", filter_table);
+        parse_gamma_tuning_parameters_filter(blackWhite, &gamma->filter_table.blackWhite);
+
+        //negative
+        json_value * negative = get_object("negative", filter_table);
+        parse_gamma_tuning_parameters_filter(negative, &gamma->filter_table.negative);
+
+        //bluish
+        json_value * bluish = get_object("bluish", filter_table);
+        parse_gamma_tuning_parameters_filter(bluish, &gamma->filter_table.bluish);
+        //reserved
+        json_value * reserved = get_object("reserved", filter_table);
+        parse_gamma_tuning_parameters_filter(reserved, &gamma->filter_table.reserved);
+        //reserved1
+        json_value * reserved1 = get_object("reserved1", filter_table);
+        parse_gamma_tuning_parameters_filter(reserved1, &gamma->filter_table.reserved1);
+        //reserved2
+        json_value * reserved2 = get_object("reserved2", filter_table);
+        parse_gamma_tuning_parameters_filter(reserved2, &gamma->filter_table.reserved2);
+        //reserved3
+        json_value * reserved3 = get_object("reserved3", filter_table);
+        parse_gamma_tuning_parameters_filter(reserved3, &gamma->filter_table.reserved3);
+        //reserved4
+        json_value * reserved4 = get_object("reserved4", filter_table);
+        parse_gamma_tuning_parameters_filter(reserved4, &gamma->filter_table.reserved4);
+    }
     return 0;
+}
+
+void parse_gamma_tuning_parameters_filter(json_value *filter, gamma_filter_item * item) {
+    int i, j, size;
+    if (filter && filter->type == json_object) {
+        json_value *rgbFlag = get_object("rgbFlag", filter);
+        if (rgbFlag && rgbFlag->type == json_array) {
+            if (rgbFlag->u.array.length == RGB_CHANNEL)  {
+                item->rgbFlag[0] = (U32) rgbFlag->u.array.values[0]->u.integer;
+                item->rgbFlag[1] = (U32) rgbFlag->u.array.values[1]->u.integer;
+                item->rgbFlag[2] = (U32) rgbFlag->u.array.values[2]->u.integer;
+            } else {
+                printf("bad rgbFlag array length (%d) for whiteBlack Filter.\n", rgbFlag->u.array.length);
+            }
+        }
+
+        json_value *rgb = get_object("rgb", filter);
+        if (rgb && rgb->type == json_array) {
+            if (rgb->u.array.length == RGB_CHANNEL * GAMMA_TABLE_COUNT) {
+                size = 0;
+                for (i = 0; i < RGB_CHANNEL; ++i) {
+                    for (j = 0; j < GAMMA_TABLE_COUNT; ++j, ++size) {
+                        item->rgb[i][j] =
+                            (U32)rgb->u.array.values[size]->u.integer;
+                    }
+                }
+            } else {
+                printf("bad rgb array length (%d) for whiteBlack Filter. \n", rgb->u.array.length);
+            }
+        }
+    }
 }
 
 int parse_awb_tuning_parameters(json_value *value, awb_tuning_parameters *awb) {

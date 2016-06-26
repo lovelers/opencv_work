@@ -52,8 +52,8 @@ typedef struct __gamma_base_config {
     int outdoorBaseOffset;
     int outdoorEndOffset;
     U32 outdoorLinearityWeight;
-    const U32 gamma_table_x[32];
-    const float user_gamma[32];
+    U32 gamma_table_x[32];
+    float user_gamma[32];
 } __attribute__((__packed__)) gamma_base_config;
 
 /**
