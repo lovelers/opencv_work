@@ -237,8 +237,8 @@
                 8333.3333, 1.0, 8333.3333
             ]
         },
-        "environment_i.0o" : {
-            "indooorBvRange" : [70000.0, 32.0, 600.0, 30000.0, 1.0, 600.0],
+        "environment_info" : {
+            "indoorBvRange" : [70000.0, 32.0, 600.0, 30000.0, 1.0, 600.0],
             "normalBvRange" : [30000.0, 1.0, 600.0, 20000.0, 1.0, 600.0],
             "outdoorBvRange" : [20000.0, 1.0, 600.0, 1000.0, 1.0, 600.0],
             "underExposureBvRange" : [70000.0, 32.0, 100.0, 70000.0, 32.0, 500.0],
@@ -450,6 +450,7 @@
                     10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000,
                 ]
             },
+
             "reserved3" : {
                 "rgbFlag" : [2, 2, 2],
                 "rgb" : [
@@ -495,7 +496,7 @@
         "macadam_ratio" : 0.3,
         "color_sampling" : [ 1.05, 0.95],
         "surpressr" : 0.0,
-        "saturation_defalt" : 0,
+        "saturation_default" : 0,
         "delight_color" : 100,
         "chromatic_adaptation" : 0.9,
         "g_norm_off_compensation" : 25,

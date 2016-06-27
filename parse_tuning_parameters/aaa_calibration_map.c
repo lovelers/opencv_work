@@ -97,16 +97,24 @@ int parseCalibrationMapFromJson(const char * _file, aaa_calibration_map * _map) 
     // check the header of json value.
     {
         json_value * af = get_object("af", value);
-        parse_af_tuning_parameters(af, &_map->af);
+        if (af && af->type == json_object) {
+            parse_af_tuning_parameters(af, &_map->af);
+        }
 
         json_value * ae = get_object("ae", value);
-        parse_ae_tuning_parameters(ae, &_map->ae);
+        if (ae && ae->type == json_object) {
+            parse_ae_tuning_parameters(ae, &_map->ae);
+        }
 
         json_value * gamma = get_object("gamma", value);
-        parse_gamma_tuning_parameters(gamma, &_map->gamma);
+        if (gamma && gamma->type == json_object) {
+            parse_gamma_tuning_parameters(gamma, &_map->gamma);
+        }
 
         json_value * awb = get_object("awb", value);
-        parse_awb_tuning_parameters(awb, &_map->awb);
+        if (awb && awb->type == json_object) {
+            parse_awb_tuning_parameters(awb, &_map->awb);
+        }
     }
     json_value_free(value);
     free(contents);
@@ -204,16 +212,16 @@ int parse_af_tuning_parameters(json_value *value, AF_TuningParameters *af) {
     }
 
     json_value *filter_weights = get_object("filter_weights", value);
-    if (filter_weights) {
+    if (filter_weights && filter_weights->type == json_object) {
         json_value *weight_shift_big_filter = get_object("weight_shift_big_filter", filter_weights);
-        if (weight_shift_big_filter) {
+        if (weight_shift_big_filter && weight_shift_big_filter->type == json_array) {
             for (i = 0; i < 5; ++i) {
                 af->filterWeightsTune.weightShiftBigFilter[i] =(int8_t) weight_shift_big_filter->u.array.values[i]->u.integer;
             }
         }
 
         json_value *weight_shift_row_filter = get_object("weight_shift_row_filter", filter_weights);
-        if (weight_shift_row_filter) {
+        if (weight_shift_row_filter && weight_shift_row_filter->type == json_array) {
             for (i = 0; i < 5; ++i) {
                 af->filterWeightsTune.weightShiftRowFilter[i] = (int8_t) weight_shift_row_filter->u.array.values[i]->u.integer;
             }
@@ -256,23 +264,23 @@ int parse_af_tuning_parameters(json_value *value, AF_TuningParameters *af) {
 
     json_value *scene_change = get_object("scene_change", value);
     if (scene_change && scene_change->type == json_array) {
-        af->sceneChangeTune.dataTriggerRatioThreshold = (float) delay->u.array.values[0]->u.dbl;
-        af->sceneChangeTune.gyroTriggerThreshold = (int) delay->u.array.values[1]->u.integer;
-        af->sceneChangeTune.rangeTriggerThreshold = (int) delay->u.array.values[2]->u.integer;
-        af->sceneChangeTune.dataStableRatioThreshold = (float) delay->u.array.values[3]->u.dbl;
-        af->sceneChangeTune.gyroStableThreshold = (int) delay->u.array.values[4]->u.integer;
-        af->sceneChangeTune.rangeStableThreshold = (int) delay->u.array.values[5]->u.integer;
-        af->sceneChangeTune.isGyroTriggerEnabled = (int8_t) delay->u.array.values[6]->u.integer;
+        af->sceneChangeTune.dataTriggerRatioThreshold = (float) scene_change->u.array.values[0]->u.dbl;
+        af->sceneChangeTune.gyroTriggerThreshold = (int) scene_change->u.array.values[1]->u.integer;
+        af->sceneChangeTune.rangeTriggerThreshold = (int) scene_change->u.array.values[2]->u.integer;
+        af->sceneChangeTune.dataStableRatioThreshold = (float) scene_change->u.array.values[3]->u.dbl;
+        af->sceneChangeTune.gyroStableThreshold = (int) scene_change->u.array.values[4]->u.integer;
+        af->sceneChangeTune.rangeStableThreshold = (int) scene_change->u.array.values[5]->u.integer;
+        af->sceneChangeTune.isGyroTriggerEnabled = (int8_t) scene_change->u.array.values[6]->u.integer;
         af->sceneChangeTune.reserved[0] = 0;
         af->sceneChangeTune.reserved[1] = 0;
         af->sceneChangeTune.reserved[2] = 0;
     }
     json_value *search_pause = get_object("search_pause", value);
     if (search_pause && search_pause->type == json_array) {
-        af->pauseTune.gyroPauseThreshold = (int) delay->u.array.values[0]->u.integer;
-        af->pauseTune.rangePauseThreshold = (int) delay->u.array.values[1]->u.integer;
-        af->pauseTune.gyroStableThreshold = (int) delay->u.array.values[2]->u.integer;
-        af->pauseTune.rangeStableThreshold = (int) delay->u.array.values[3]->u.integer;
+        af->pauseTune.gyroPauseThreshold = (int) search_pause->u.array.values[0]->u.integer;
+        af->pauseTune.rangePauseThreshold = (int) search_pause->u.array.values[1]->u.integer;
+        af->pauseTune.gyroStableThreshold = (int) search_pause->u.array.values[2]->u.integer;
+        af->pauseTune.rangeStableThreshold = (int) search_pause->u.array.values[3]->u.integer;
     }
     return 0;
 }
@@ -281,7 +289,7 @@ int parse_ae_tuning_parameters(json_value *value, ae_tuning_parameters *ae) {
     int size, i;
     json_value *metering_config = get_object("metering_config", value);
     // metering_config
-    {
+    if (metering_config && metering_config->type == json_object) {
         json_value *centerWidth = get_object("centerWidth", metering_config);
         if (centerWidth && centerWidth->type == json_integer) {
             ae->metering_config.centerWidth = (U32)centerWidth->u.integer;
@@ -294,7 +302,8 @@ int parse_ae_tuning_parameters(json_value *value, ae_tuning_parameters *ae) {
 
         json_value *centerMap = get_object("centerMap", metering_config);
         if (centerMap && centerMap->type == json_array) {
-            for (i = 0; i < ae->metering_config.centerHeight * ae->metering_config.centerWidth; ++i) {
+            size = ae->metering_config.centerHeight * ae->metering_config.centerWidth;
+            for (i = 0; i < size; ++i) {
                 ae->metering_config.centerMap[i] = (U8) centerMap->u.array.values[i]->u.integer;
             }
         }
@@ -311,15 +320,16 @@ int parse_ae_tuning_parameters(json_value *value, ae_tuning_parameters *ae) {
 
         json_value *spotMap = get_object("spotMap", metering_config);
         if (spotMap && spotMap->type == json_array) {
-            for (i = 0; i < ae->metering_config.spotHeight * ae->metering_config.spotWidth; ++i) {
+            size = ae->metering_config.spotHeight * ae->metering_config.spotWidth;
+            for (i = 0; i < size; ++i) {
                 ae->metering_config.spotMap[i] = (U8) spotMap->u.array.values[i]->u.integer;
             }
         }
     }
 
     //base config.
-    {
-        json_value *base_config = get_object("base_config", value);
+    json_value *base_config = get_object("base_config", value);
+    if (base_config && base_config->type == json_object) {
         
         json_value *targetBrMin = get_object("targetBrMin", base_config);
         if (targetBrMin && targetBrMin->type == json_integer) {
@@ -383,9 +393,8 @@ int parse_ae_tuning_parameters(json_value *value, ae_tuning_parameters *ae) {
     }
 
     // convergent_table.
-    {
-        json_value *convergent_table = get_object("convergent_table", value);
-
+    json_value *convergent_table = get_object("convergent_table", value);
+    if (convergent_table && convergent_table->type == json_object) {
         json_value *targetBr = get_object("targetBr", convergent_table);
         if (targetBr && targetBr->type == json_integer) {
             ae->convergent_table.targetBr = (U32) targetBr->u.integer;
@@ -461,8 +470,8 @@ int parse_ae_tuning_parameters(json_value *value, ae_tuning_parameters *ae) {
     }
 
     //environment info.
-    {
-        json_value *environment_info = get_object("enviroment_info", value);
+    json_value *environment_info = get_object("environment_info", value);
+    if (environment_info && environment_info->type == json_object) {
 
         if (environment_info && environment_info->type == json_object) {
             json_value *indoorBvRange = get_object("indoorBvRange", environment_info);
@@ -486,28 +495,26 @@ int parse_ae_tuning_parameters(json_value *value, ae_tuning_parameters *ae) {
     }
 
     // dynamic_compensation
-    {
-        json_value *dynamic_compensation = get_object("dynamic_compensation", value);
-        if (dynamic_compensation && dynamic_compensation->type == json_object) {
-            json_value * dynamic_ae_enabled = get_object("dynamic_ae_enabled", dynamic_compensation);
-            if (dynamic_ae_enabled && dynamic_ae_enabled->type == json_integer) {
-                ae->dynamic_compensation.dynamic_ae_enabled = (int) dynamic_ae_enabled->u.integer;
-            }
+    json_value *dynamic_compensation = get_object("dynamic_compensation", value);
+    if (dynamic_compensation && dynamic_compensation->type == json_object) {
+        json_value * dynamic_ae_enabled = get_object("dynamic_ae_enabled", dynamic_compensation);
+        if (dynamic_ae_enabled && dynamic_ae_enabled->type == json_integer) {
+            ae->dynamic_compensation.dynamic_ae_enabled = (int) dynamic_ae_enabled->u.integer;
+        }
 
-            json_value * pureWhiteThreshold = get_object("pureWhiteThreshold", dynamic_compensation);
-            if (pureWhiteThreshold && pureWhiteThreshold->type == json_double) {
-                ae->dynamic_compensation.pureWhiteThreshold = (float) pureWhiteThreshold->u.dbl;
-            }
+        json_value * pureWhiteThreshold = get_object("pureWhiteThreshold", dynamic_compensation);
+        if (pureWhiteThreshold && pureWhiteThreshold->type == json_double) {
+            ae->dynamic_compensation.pureWhiteThreshold = (float) pureWhiteThreshold->u.dbl;
+        }
 
-            json_value * pureWhiteEnhanceMaxRatio = get_object("pureWhiteEnhanceMaxRatio", dynamic_compensation);
-            if (pureWhiteEnhanceMaxRatio && pureWhiteEnhanceMaxRatio->type == json_double) {
-                ae->dynamic_compensation.pureWhiteEnhanceMaxRatio = (float) pureWhiteEnhanceMaxRatio->u.dbl;
-            }
+        json_value * pureWhiteEnhanceMaxRatio = get_object("pureWhiteEnhanceMaxRatio", dynamic_compensation);
+        if (pureWhiteEnhanceMaxRatio && pureWhiteEnhanceMaxRatio->type == json_double) {
+            ae->dynamic_compensation.pureWhiteEnhanceMaxRatio = (float) pureWhiteEnhanceMaxRatio->u.dbl;
+        }
 
-            json_value * lowLightWeakRatio = get_object("lowLightWeakRatio", dynamic_compensation);
-            if (lowLightWeakRatio && lowLightWeakRatio->type == json_double) {
-                ae->dynamic_compensation.lowLightWeakRatio = (float) lowLightWeakRatio->u.dbl;
-            }
+        json_value * lowLightWeakRatio = get_object("lowLightWeakRatio", dynamic_compensation);
+        if (lowLightWeakRatio && lowLightWeakRatio->type == json_double) {
+            ae->dynamic_compensation.lowLightWeakRatio = (float) lowLightWeakRatio->u.dbl;
         }
     }
     return 0;
@@ -536,15 +543,15 @@ int parse_gamma_tuning_parameters(json_value *value, gamma_tuning_parameters *ga
         }
         json_value *normalBaseOffset = get_object("normalBaseOffset", base_config);
         if (normalBaseOffset && normalBaseOffset->type == json_integer) {
-            gamma->base_config.normalBaseOffset = (int) normalBaseOffset->u.dbl;
+            gamma->base_config.normalBaseOffset = (int) normalBaseOffset->u.integer;
         }
         json_value *normalEndOffset = get_object("normalEndOffset", base_config);
-        if (normalEndOffset && normalEndOffset->type == json_double) {
-            gamma->base_config.normalEndOffset = (int) normalEndOffset->u.dbl;
+        if (normalEndOffset && normalEndOffset->type == json_integer) {
+            gamma->base_config.normalEndOffset = (int) normalEndOffset->u.integer;
         }
         json_value *normalLinearityWeight = get_object("normalLinearityWeight", base_config);
-        if (normalLinearityWeight && normalLinearityWeight->type == json_double) {
-            gamma->base_config.normalLinearityWeight = (U32) normalLinearityWeight->u.dbl;
+        if (normalLinearityWeight && normalLinearityWeight->type == json_integer) {
+            gamma->base_config.normalLinearityWeight = (U32) normalLinearityWeight->u.integer;
         }
 
         json_value *indoorGamma = get_object("indoorGamma", base_config);
@@ -553,17 +560,16 @@ int parse_gamma_tuning_parameters(json_value *value, gamma_tuning_parameters *ga
         }
         json_value *indoorBaseOffset = get_object("indoorBaseOffset", base_config);
         if (indoorBaseOffset && indoorBaseOffset->type == json_integer) {
-            gamma->base_config.indoorBaseOffset = (int) indoorBaseOffset->u.dbl;
+            gamma->base_config.indoorBaseOffset = (int) indoorBaseOffset->u.integer;
         }
         json_value *indoorEndOffset = get_object("indoorEndOffset", base_config);
         if (indoorEndOffset && indoorEndOffset->type == json_double) {
-            gamma->base_config.indoorEndOffset = (int) indoorEndOffset->u.dbl;
+            gamma->base_config.indoorEndOffset = (int) indoorEndOffset->u.integer;
         }
         json_value *indoorLinearityWeight = get_object("indoorLinearityWeight", base_config);
-        if (indoorLinearityWeight && indoorLinearityWeight->type == json_double) {
-            gamma->base_config.indoorLinearityWeight = (U32) indoorLinearityWeight->u.dbl;
+        if (indoorLinearityWeight && indoorLinearityWeight->type == json_integer) {
+            gamma->base_config.indoorLinearityWeight = (U32) indoorLinearityWeight->u.integer;
         }
-
 
         json_value *outdoorGamma = get_object("outdoorGamma", base_config);
         if (outdoorGamma && outdoorGamma->type == json_double) {
@@ -571,15 +577,15 @@ int parse_gamma_tuning_parameters(json_value *value, gamma_tuning_parameters *ga
         }
         json_value *outdoorBaseOffset = get_object("outdoorBaseOffset", base_config);
         if (outdoorBaseOffset && outdoorBaseOffset->type == json_integer) {
-            gamma->base_config.outdoorBaseOffset = (int) outdoorBaseOffset->u.dbl;
+            gamma->base_config.outdoorBaseOffset = (int) outdoorBaseOffset->u.integer;
         }
         json_value *outdoorEndOffset = get_object("outdoorEndOffset", base_config);
-        if (outdoorEndOffset && outdoorEndOffset->type == json_double) {
-            gamma->base_config.outdoorEndOffset = (int) outdoorEndOffset->u.dbl;
+        if (outdoorEndOffset && outdoorEndOffset->type == json_integer) {
+            gamma->base_config.outdoorEndOffset = (int) outdoorEndOffset->u.integer;
         }
         json_value *outdoorLinearityWeight = get_object("outdoorLinearityWeight", base_config);
-        if (outdoorLinearityWeight && outdoorLinearityWeight->type == json_double) {
-            gamma->base_config.outdoorLinearityWeight = (U32) outdoorLinearityWeight->u.dbl;
+        if (outdoorLinearityWeight && outdoorLinearityWeight->type == json_integer) {
+            gamma->base_config.outdoorLinearityWeight = (U32) outdoorLinearityWeight->u.integer;
         }
 
         json_value *gamma_table_x = get_object("gamma_table_x", base_config);
