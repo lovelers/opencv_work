@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DEFAULT_FILE "temp.bin"
+#define DEFAULT_FILE "mz_rcam_cali.json"
 void LoadTuningParametersFromAlgoDefaultSettings(aaa_calibration_map * map) {
     memcpy(&map->af, meizu_autofocus_get_tuning_parameters(), sizeof (AF_TuningParameters));
     memcpy(&map->ae, meizu_tuning_get_ae(), sizeof (ae_tuning_parameters));
@@ -27,10 +27,15 @@ int main(int argc, char *argv[]) {
     const char *file = (argc > 1) ? argv[1] : DEFAULT_FILE;
     //parseCalibrationMapFromBin(file, &map);
     parseCalibrationMapFromJson(file, &map);
+    saveCalibrationMapToBin("mz_rcam_cali1.bin", &map);
 
+    aaa_calibration_map map1;
+    parseCalibrationMapFromBin("mz_rcam_cali1.bin", &map1);
+
+    compareBinMap(&map, &map1);
     // ae_tuning_parameters
     {
-        printAeTuningParameters(&map);
+        //printAeTuningParameters(&map);
     }
 
     return 0;

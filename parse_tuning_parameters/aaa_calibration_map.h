@@ -20,6 +20,8 @@ int parseCalibrationMapFromBin(const char *_file, const aaa_calibration_map * _m
 int parseCalibrationMapFromJson(const char *_file, aaa_calibration_map *_map);
 int saveCalibrationMapToJson(const char * _file, const aaa_calibration_map * _map);
 
+int compareBinMap(const aaa_calibration_map * _map, const aaa_calibration_map *_map1);
+
 int parse_af_tuning_parameters(json_value *value, AF_TuningParameters *af);
 int parse_ae_tuning_parameters(json_value *value, ae_tuning_parameters *ae);
 int parse_gamma_tuning_parameters(json_value *value, gamma_tuning_parameters *gamma);
@@ -35,6 +37,5 @@ void print_object(const json_value *value,  int depth);
 void print_array(const json_value *value, int depth);
 
 json_value *get_object(const char * key, json_value *value);
-json_value *get_array(const char *key, json_value *value);
 
 #endif// __AAA_CLIBRATION_MAP_H

@@ -12,16 +12,15 @@ int saveCalibrationMapToBin(const char *_file, const aaa_calibration_map *_map) 
 
     FILE *fp = fopen(_file, "wb+");
     if (!fp) {
-        printf("saveCalibrationMapToFile failed. open %s failed\n", _file);
+        printf("saveCalibrationMapToBin failed. open %s failed\n", _file);
         return -1;
     }
     int n = sizeof(aaa_calibration_map);
-    int offset = 0;
-    int cnt = 0;
-    do {
-        cnt = fwrite((const void *) _map+offset, 1, n-offset, fp);
-        offset += cnt;
-    } while (offset < n && cnt > 0);
+    if (fwrite(_map, n, 1, fp) != 1) {
+        printf("saveCalibrationMapToBin failed. fwrite error: %d \n", ferror(fp));
+        fclose(fp);
+        return -1;
+    }
 
     fclose(fp);
 
@@ -49,12 +48,11 @@ int parseCalibrationMapFromBin(const char *_file, const aaa_calibration_map * _m
 
     rewind(fp);
 
-    int cnt = 0;
-    int offset = 0;
-    do {
-        cnt = fread((void *)_map, 1, requestSize - offset, fp);
-        offset += cnt;
-    } while (offset < requestSize && cnt > 0);
+    if (fread((void*)_map, requestSize, 1, fp) != 1) {
+        printf("parseCalibrationMapFromBin failed. fread error: %d \n", ferror(fp));
+        fclose(fp);
+        return -1;
+    }
 
     printf ("parse %s success. file length: %d, request length: %d \n",
             _file, fileSize, requestSize);
@@ -87,7 +85,7 @@ int parseCalibrationMapFromJson(const char * _file, aaa_calibration_map * _map) 
 
     fclose(fp);
 
-    printf ("%s\n", contents);
+    //printf ("%s\n", contents);
 
     json_value *value = json_parse((json_char *)contents, size);
 
@@ -95,7 +93,6 @@ int parseCalibrationMapFromJson(const char * _file, aaa_calibration_map * _map) 
         printf("Unable to parse data");
         return -1;
     }
-
 
     // check the header of json value.
     {
@@ -282,7 +279,6 @@ int parse_af_tuning_parameters(json_value *value, AF_TuningParameters *af) {
 
 int parse_ae_tuning_parameters(json_value *value, ae_tuning_parameters *ae) {
     int size, i;
-    print_json_value(value, 0);
     json_value *metering_config = get_object("metering_config", value);
     // metering_config
     {
@@ -530,7 +526,6 @@ void parse_ae_tuning_parameters_bv_range(json_value *value, ae_bv_range * range)
 }
 
 int parse_gamma_tuning_parameters(json_value *value, gamma_tuning_parameters *gamma) {
-    print_json_value(value, 0);
     int i, size;
 
     json_value *base_config = get_object("base_config", value);
@@ -690,7 +685,6 @@ void parse_gamma_tuning_parameters_filter(json_value *filter, gamma_filter_item 
 }
 
 int parse_awb_tuning_parameters(json_value *value, awb_tuning_parameters *awb) {
-    print_json_value(value, 0);
     if (value && value->type == json_object) {
         json_value * white_point_gain = get_object("white_point_gain", value);
         if (white_point_gain && white_point_gain->type == json_array) {
@@ -844,5 +838,37 @@ json_value *get_object(const char *key, json_value *value) {
     return NULL;
 }
 
-json_value *get_array(const char *key, json_value *value) {
+int compareBinMap(const aaa_calibration_map * _map, const aaa_calibration_map *_map1) {
+    int ret = 0;
+    if (_map && _map1) {
+        if (_map == _map1) {
+            printf("same address \n");
+            return ret;
+        }
+
+        if (memcmp(_map, _map1, sizeof (aaa_calibration_map)) == 0) {
+            printf("the tow bins are same contents\n");
+            return ret;
+        }
+
+        ret = -1;
+        if (memcmp(&_map->af, &_map1->af, sizeof (AF_TuningParameters)) != 0) {
+            printf("af segment are different!\n");
+        }
+
+        if (memcmp(&_map->ae, &_map1->ae, sizeof (ae_tuning_parameters)) != 0) {
+            printf("ae segment are different!\n");
+        }
+
+        if (memcmp(&_map->gamma, &_map1->gamma, sizeof (gamma_tuning_parameters)) != 0) {
+            printf("gamma segment are different!\n");
+        }
+
+        if (memcmp(&_map->awb, &_map1->gamma, sizeof (awb_tuning_parameters)) != 0) {
+            printf("awb segment are different!\n");
+        }
+        return ret;
+    }
+
+    return -1;
 }
