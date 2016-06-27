@@ -494,7 +494,7 @@
         "manual_gain" : [1024, 1024, 1024],
         "macadam_ratio" : 0.3,
         "color_sampling" : [ 1.05, 0.95],
-        "surpressr" : [0.0],
+        "surpressr" : 0.0,
         "saturation_defalt" : 0,
         "delight_color" : 100,
         "chromatic_adaptation" : 0.9,

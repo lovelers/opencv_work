@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <string.h>
 
 #define DEFAULT_FILE_PATH "mz_rcam_cali.bin.tmp"
 int saveCalibrationMapToBin(const char *_file, const aaa_calibration_map *_map) {
@@ -689,7 +690,143 @@ void parse_gamma_tuning_parameters_filter(json_value *filter, gamma_filter_item 
 }
 
 int parse_awb_tuning_parameters(json_value *value, awb_tuning_parameters *awb) {
+    print_json_value(value, 0);
+    if (value && value->type == json_object) {
+        json_value * white_point_gain = get_object("white_point_gain", value);
+        if (white_point_gain && white_point_gain->type == json_array) {
+            awb->white_point_gain.rGain = (int)white_point_gain->u.array.values[0]->u.integer;
+            awb->white_point_gain.gGain = (int)white_point_gain->u.array.values[1]->u.integer;
+            awb->white_point_gain.bGain = (int)white_point_gain->u.array.values[2]->u.integer;
+        }
+
+        json_value * white_point_ratio = get_object("white_point_ratio", value);
+        if (white_point_ratio && white_point_ratio->type == json_array) {
+            awb->white_point_ratio.rRatio = (float)white_point_ratio->u.array.values[0]->u.dbl;
+            awb->white_point_ratio.gRatio = (float)white_point_ratio->u.array.values[1]->u.dbl;
+            awb->white_point_ratio.bRatio = (float)white_point_ratio->u.array.values[2]->u.dbl;
+        }
+
+        json_value * manual_gain_mode = get_object("manual_gain_mode", value);
+        if (manual_gain_mode && manual_gain_mode->type == json_integer) {
+            awb->manual_gain_mode = (int)manual_gain_mode->u.integer;
+        }
+
+        json_value * manual_gain = get_object("manual_gain", value);
+        if (manual_gain && manual_gain->type == json_array) {
+            awb->manual_gain.rGain = (int)manual_gain->u.array.values[0]->u.integer;
+            awb->manual_gain.gGain = (int)manual_gain->u.array.values[1]->u.integer;
+            awb->manual_gain.bGain = (int)manual_gain->u.array.values[2]->u.integer;
+        }
+
+        json_value * macadam_ratio = get_object("macadam_ratio", value);
+        if (macadam_ratio && macadam_ratio->type == json_double) {
+            awb->macadam_ratio = (float)macadam_ratio->u.dbl;
+        }
+
+        json_value *color_sampling = get_object("color_sampling", value);
+        if (color_sampling && color_sampling->type == json_array) {
+            awb->color_sampling_high = (float)color_sampling->u.array.values[0]->u.dbl;
+            awb->color_sampling_low = (float)color_sampling->u.array.values[1]->u.dbl;
+        }
+
+        json_value *surpressr = get_object("surpressr", value);
+        if (surpressr && surpressr->type == json_double) {
+            awb->surpressr = (float) surpressr->u.dbl;
+        }
+
+        json_value *saturation_default = get_object("saturation_default", value);
+        if (saturation_default && saturation_default->type == json_integer) {
+            awb->saturation_default = (int) saturation_default->u.integer;
+        }
+
+        json_value *delight_color = get_object("delight_color", value);
+        if (delight_color && delight_color->type == json_integer) {
+            awb->delight_color = (int) delight_color->u.integer;
+        }
+
+        json_value *chromatic_adaptation = get_object("chromatic_adaptation", value);
+        if (chromatic_adaptation && chromatic_adaptation->type == json_double) {
+            awb->chromatic_adaptation = (float) chromatic_adaptation->u.dbl;
+        }
+
+        json_value *g_norm_off_compensation = get_object("g_norm_off_compensation", value);
+        if (g_norm_off_compensation && g_norm_off_compensation->type == json_integer) {
+            awb->g_norm_off_compensation = (int) g_norm_off_compensation->u.integer;
+        }
+
+
+        json_value *scene = get_object("scene", value);
+        if (scene && scene->type == json_object) {
+            json_value *unknown = get_object("unknown", scene);
+            parse_awb_tuning_parameters_scene(unknown, &awb->wb[WB_UNKNOWN_SCENE]);
+
+            json_value *deepblue = get_object("deepblue", scene);
+            parse_awb_tuning_parameters_scene(deepblue, &awb->wb[WB_DEEP_BLUE_SCENE]);
+
+            json_value *d75 = get_object("d75", scene);
+            parse_awb_tuning_parameters_scene(d75, &awb->wb[WB_D75_DAYLIGHT_SCENE]);
+
+            json_value *d65 = get_object("d65", scene);
+            parse_awb_tuning_parameters_scene(d65, &awb->wb[WB_D65_DAYLIGHT_SCENE]);
+
+            json_value *d50 = get_object("d50", scene);
+            parse_awb_tuning_parameters_scene(d50, &awb->wb[WB_D50_DAYLIGHT_SCENE]);
+
+            json_value *yellowish = get_object("yellowish", scene);
+            parse_awb_tuning_parameters_scene(yellowish, &awb->wb[WB_YELLOWISH_SCENE]);
+
+            json_value *coldwhite = get_object("coldwhite", scene);
+            parse_awb_tuning_parameters_scene(coldwhite, &awb->wb[WB_COLD_WHITE_SCENE]);
+
+            json_value *tl84 = get_object("tl84", scene);
+            parse_awb_tuning_parameters_scene(tl84, &awb->wb[WB_TL84_SCENE]);
+
+            json_value *alight = get_object("alight", scene);
+            parse_awb_tuning_parameters_scene(alight, &awb->wb[WB_ALIGHT_SCENE]);
+
+            json_value *horizon = get_object("horizon", scene);
+            parse_awb_tuning_parameters_scene(horizon, &awb->wb[WB_HORIZON_SCENE]);
+        }
+    }
     return 0;
+}
+
+void parse_awb_tuning_parameters_scene(json_value *scene, awb_white_balance *wb) {
+    if (scene && scene->type == json_object) {
+        json_value *gray_rb_ratio = get_object("gray_rb_ratio", scene);
+        if (gray_rb_ratio && gray_rb_ratio->type == json_array) {
+            wb->gray_rb_ratio.min = (float) gray_rb_ratio->u.array.values[0]->u.dbl;
+            wb->gray_rb_ratio.max = (float) gray_rb_ratio->u.array.values[1]->u.dbl;
+        }
+
+        json_value *gray_fb_ratio = get_object("gray_fb_ratio", scene);
+        if (gray_fb_ratio && gray_fb_ratio->type == json_array) {
+            wb->gray_fb_ratio.min = (float) gray_fb_ratio->u.array.values[0]->u.dbl;
+            wb->gray_fb_ratio.max = (float) gray_fb_ratio->u.array.values[1]->u.dbl;
+        }
+
+        json_value *wp_rb_ratio = get_object("wp_rb_ratio", scene);
+        if (wp_rb_ratio && wp_rb_ratio->type == json_array) {
+            wb->wp_rb_ratio.min = (float) wp_rb_ratio->u.array.values[0]->u.dbl;
+            wb->wp_rb_ratio.max = (float) wp_rb_ratio->u.array.values[1]->u.dbl;
+        }
+
+        json_value *wp_fb_ratio = get_object("wp_fb_ratio", scene);
+        if (wp_fb_ratio && wp_fb_ratio->type == json_array) {
+            wb->wp_fb_ratio.min = (float) wp_fb_ratio->u.array.values[0]->u.dbl;
+            wb->wp_fb_ratio.max = (float) wp_fb_ratio->u.array.values[1]->u.dbl;
+        }
+
+        json_value *scene_type = get_object("scene_type", scene);
+        if (scene_type && scene_type->type == json_integer) {
+            wb->scene_type = (int) scene_type->u.integer;
+        }
+
+        json_value *scene_name = get_object("scene_name", scene);
+        if (scene_name && scene_name->type == json_string) {
+            memcpy(wb->scene_name, scene_name->u.string.ptr, WB_SCENE_NAME_COUNT);
+        }
+    }
 }
 
 json_value *get_object(const char *key, json_value *value) {

@@ -27,6 +27,7 @@ int parse_awb_tuning_parameters(json_value *value, awb_tuning_parameters *awb);
 
 void parse_ae_tuning_parameters_bv_range(json_value *value, ae_bv_range * range);
 void parse_gamma_tuning_parameters_filter(json_value *filter, gamma_filter_item * item);
+void parse_awb_tuning_parameters_scene(json_value *scene, awb_white_balance *wb);
 
 void print_depth_shift(int depth);
 void print_json_value(const json_value *value, int depth);
