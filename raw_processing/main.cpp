@@ -65,8 +65,8 @@ int main(int argc, char**argv) {
 
     Mat3w rgb8(height, width);
     {
-        AutoTimer timer("demosaicing");
-        raw.demosaicing(denoised, &rgb8, pattern, 0xFF);
+        AutoTimer timer("bayer2rgb");
+        raw.bayer2rgb(bayer8, &rgb8, pattern, 0xFF);
     }
 #if 1
     raw.applyGamma(rgb8, 128, 0xFF);
@@ -74,16 +74,29 @@ int main(int argc, char**argv) {
 #endif
     Mat3w yuv8(height, width);
     raw.rgb2yuv(rgb8, yuv8);
-    //raw.histEqualization(yuv8, 0xFF);
-    raw.yuv2rgb(yuv8, rgb8);
+
+    Mat3w yuv8d(height, width);
+    {
+        AutoTimer time("denosieYuvDomain");
+        raw.denoiseYuvDomain(yuv8, yuv8d);
+    }
+    Mat3w rgb8w(height, width);
+    raw.yuv2rgb(yuv8d, rgb8w);
+
+    {
+        AutoTimer time("PSNR");
+        cout << "the denoise PSNR: " << raw.PSNR(rgb8, rgb8w, 0xFF) << endl;
+    }
+
     Mat3b rgb8b(height, width);
-    for (int row = 0; row < rgb8.rows; ++row) {
-        for (int col = 0; col < rgb8.cols; ++col) {
-            rgb8b(row, col)[0] = rgb8(row, col)[0] > 255 ? 255 : rgb8(row, col)[0];
-            rgb8b(row, col)[1] = rgb8(row, col)[1] > 255 ? 255 : rgb8(row, col)[1];
-            rgb8b(row, col)[2] = rgb8(row, col)[2] > 255 ? 255 : rgb8(row, col)[2];
+    for (int row = 0; row < rgb8b.rows; ++row) {
+        for (int col = 0; col < rgb8b.cols; ++col) {
+            rgb8b(row, col)[0] = (rgb8w(row, col)[0] > 255 ? 255 : rgb8w(row, col)[0]);
+            rgb8b(row, col)[1] = (rgb8w(row, col)[1] > 255 ? 255 : rgb8w(row, col)[1]);
+            rgb8b(row, col)[2] = (rgb8w(row, col)[2] > 255 ? 255 : rgb8w(row, col)[2]);
         }
     }
+
     imwrite("res/rgb8.jpg", rgb8b);
     resize(rgb8b, rgb8b, Size(800, 600));
     imshow("rgb8", rgb8b);
@@ -191,7 +204,7 @@ int main(int argc, char**argv) {
     waitKey();
 #endif
     Mat3w rgb16(height, width);
-    raw.demosaicing(bayer16, &rgb16, pattern);
+    raw.bayer2rgb(bayer16, &rgb16, pattern);
     //raw.applyCcm(rgb16, 0xFFFF);
     //raw.applyGamma(rgb16, 128, 0xFFFF + 1);
     imwrite("res/rgb16.png", rgb16);

@@ -26,10 +26,9 @@ const Mat& raw_processing::getBayerMat() {
     return bayer->getMat();
 }
 
-void raw_processing::demosaicing(const Mat1w& _bayer, Mat3w *_rgb, int _bayerPattern, int _max) {
-    demosaicing::convert(_bayer, _rgb, _bayerPattern, _max);
+void raw_processing::bayer2rgb(const Mat1w& _bayer, Mat3w *_rgb, int _bayerPattern, int _max) {
+    color_conversion::bayer_2_rgb(_bayer, _rgb, _bayerPattern, _max);
 }
-
 
 void raw_processing::applyWBGains(Mat1w &bayer, int rGains, int gGains, int bGains, int pattern) {
     //white_balance::applyWBGains(bayer, rGains, gGains, bGains, pattern);
@@ -64,3 +63,13 @@ void raw_processing::yuv2rgb(const Mat3w & _yuv, Mat3w & _rgb) {
 void raw_processing::makeSamBayer(int _height, int _width, const char *_file) {
     bayer->makeSamBayer(_height, _width, _file);
 }
+
+void raw_processing::denoiseYuvDomain(const Mat3w & _src, Mat3w & _dst) {
+    yuv_processing::denoiseYuvDomain(_src, _dst);
+}
+
+float raw_processing::PSNR(const Mat3w & _rgb1, const Mat3w & _rgb2, int _max) {
+    return rgb_analyzer::PSNR(_rgb1, _rgb2, _max);
+}
+
+

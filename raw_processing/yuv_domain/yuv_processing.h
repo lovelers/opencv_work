@@ -12,6 +12,7 @@ class yuv_processing {
         static void cutLowLevel(Mat3w & _yuv, int _cut, int _max);
         static int getContrast(const Mat3w & _yuv, int _avgBrightness);
         static int getAverageBrightness(const Mat3w & _yuv);
+        static void denoiseYuvDomain(const Mat3w & _src, Mat3w & _dst);
     private:
         yuv_processing();
 };

@@ -88,3 +88,55 @@ void yuv_processing::cutLowLevel(Mat3w & _yuv, int _cut, int _max) {
         }
     }
 }
+
+void yuv_processing::denoiseYuvDomain(const Mat3w & _src, Mat3w & _dst) {
+    // uv smoothing only. 3x3 matrix
+    {
+        int row = _src.rows;
+        int col = _src.cols;
+        for (int i = 1; i < row-1; ++i) {
+            for (int j = 1; j < col-1; ++j) {
+                _dst(i, j)[2] = _src(i, j)[2];
+                _dst(i, j)[1] = (_src(i-1,j-1)[1]
+                        + _src(i-1, j)[1]
+                        + _src(i-1, j+1)[1]
+                        + _src(i, j-1)[1]
+                        + _src(i, j)[1]
+                        + _src(i, j+1)[1]
+                        + _src(i+1, j-1)[1]
+                        + _src(i+1, j)[1]
+                        + _src(i+1, j+1)[1]) / 9;
+                _dst(i, j)[0] = (_src(i-1,j-1)[0]
+                        + _src(i-1, j)[0]
+                        + _src(i-1, j+1)[0]
+                        + _src(i, j-1)[0]
+                        + _src(i, j)[0]
+                        + _src(i, j+1)[0]
+                        + _src(i+1, j-1)[0]
+                        + _src(i+1, j)[0]
+                        + _src(i+1, j+1)[0]) / 9;
+            }
+        }
+
+        for (int i = 0; i < col; ++i) {
+            _dst(0, i)[0] = _src(0, i)[0];
+            _dst(0, i)[1] = _src(0, i)[1];
+            _dst(0, i)[2] = _src(0, i)[2];
+
+            _dst(row-1, i)[0] = _src(row-1, i)[0];
+            _dst(row-1, i)[1] = _src(row-1, i)[1];
+            _dst(row-1, i)[2] = _src(row-1, i)[2];
+        }
+
+        for (int i = 0; i < row; ++i) {
+            _dst(i, 0)[0] = _src(i, 0)[0];
+            _dst(i, 0)[1] = _src(i, 0)[1];
+            _dst(i, 0)[2] = _src(i, 0)[2];
+
+            _dst(i, col-1)[0] = _src(i, col-1)[0];
+            _dst(i, col-1)[1] = _src(i, col-1)[1];
+            _dst(i, col-1)[2] = _src(i, col-1)[2];
+        }
+
+    }
+}

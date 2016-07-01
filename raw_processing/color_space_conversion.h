@@ -1,14 +1,13 @@
-#ifndef __COLOR_DEMOSAICING_INTERPOLATION_H
-#define __COLOR_DEMOSAICING_INTERPOLATION_H
-#include <opencv2/imgproc/imgproc.hpp>
+#ifndef __COLOR_SPACE_CONVERSION_H
+#define __COLOR_SPACE_CONVERSION_H
+#include "opencv2/core.hpp"
 using namespace cv;
-/**
- * the demosaicing intperpolation method is based on the
- * "HIGH-QUALITY LINEAR INTERPOLATION FOR DEMOSAICING OF BAYER-PATTERNED COLOR IMAGES"
- * author :Henrique S. Malvar, Li-wei He, and Ross Cutler
- */
-class demosaicing {
+
+class color_conversion {
     public:
+        static void rgb_2_yuv(const Mat3w & _rgb, Mat3w & _yuv);
+        static void yuv_2_rgb(const Mat3w & _yuv, Mat3w & _rgb);
+        static void bayer_2_rgb(const Mat1w& _bayer, Mat3w *_rgb, int _bayerPattern, int _max);
         /*
          * Gr, R, Gr, R, Gr, R, Gr, R, Gr, R, Gr
          *  B, Gb, B, Gb, B, Gb, B, Gb, B, Gb, B
@@ -43,18 +42,17 @@ class demosaicing {
             RGB_PATTERN_MAX,
         };
 
+    private:
         static float sDemosaicingCofficient[RGB_PATTERN_MAX];
 
         static int sDemosaicingPattern[];
 
-        static void convert(const Mat1w& _bayer, Mat3w *_rgb, int _bayerPattern, int _max);
         static void convertRGrGbB(const Mat1w& _padded, Mat3w *_rgb, int _height, int _width, int _border, int _max);
         static void convertGrRBGb(const Mat1w& _padded, Mat3w *_rgb, int _height, int _width, int _border, int _max);
         static void convertBGbGrR(const Mat1w& _padded, Mat3w *_rgb, int _height, int _width, int _border, int _max);
         static void convertGbBRGr(const Mat1w& _padded, Mat3w *_rgb, int _height, int _width, int _border, int _max);
         static ushort calcBayerWithPattern(const Mat1w& _bayer, int _pattern, int _max);
 
-    private:
-        demosaicing();
+        color_conversion();
 };
-#endif // __COLOR_DEMOSAICING_INTERPOLATION_H
+#endif// __COLOR_SPACE_CONVERSION_H
