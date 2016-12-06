@@ -1,6 +1,7 @@
 #ifndef __BAYER_NOISE_REDUCTION_H
 #define __BAYER_NOISE_REDUCTION_H
 #include "opencv2/core.hpp"
+#include <opencv2/imgproc/imgproc.hpp>
 using namespace cv;
 
 class bayer_noise_reduction {
